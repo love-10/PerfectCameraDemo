@@ -19,7 +19,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val yolo6 by lazy {
-        Yolov6Ncnn()
+        Yolov6Ncnn().apply {
+            loadModel(assets, 0, 0)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,6 +34,12 @@ class MainActivity : AppCompatActivity() {
         binding.cameraView.setPreviewStreamSize { mutableListOf(Size(1080, 1920)) }
         binding.cameraView.frameProcessingMaxWidth = 1080
         binding.cameraView.frameProcessingMaxHeight = 1920
+        binding.cameraView.post {
+            val params = binding.trackView.layoutParams
+            params.width = binding.cameraView.width
+            params.height = binding.cameraView.height
+            binding.trackView.layoutParams = params
+        }
         binding.cameraView.addFrameProcessor { frame ->
             val data = frame.getData<ByteArray>()
             val yuvImage = YuvImage(
@@ -54,16 +62,22 @@ class MainActivity : AppCompatActivity() {
                 jpegByteArray,
                 0, jpegByteArray.size
             )
-//            binding.sampleText.setImageBitmap(BitmapUtils.reverseByHorizontal(BitmapUtils.rotate(bitmap,-90f)))
+            val time = System.currentTimeMillis()
+            val boxes =
+                yolo6.detect(BitmapUtils.reverseByHorizontal(BitmapUtils.rotate(bitmap, -90f)))
+            val boundingBoxes = boxesToBoundingBoxes(boxes)
+            binding.trackView.update(applyNMS(boundingBoxes))
+            Log.d("xxxxx", "time: ${System.currentTimeMillis() - time}")
+//            binding.sampleText.setImageBitmap()
         }
-        yolo6.loadModel(assets, 0, 0)
-        val bitmap = BitmapFactory.decodeResource(resources, R.drawable.d)
-        val time = System.currentTimeMillis()
-        val boxes = yolo6.detect(bitmap)
-        val boundingBoxes: List<BoundingBox> = boxesToBoundingBoxes(boxes)
-        val bitmap1: Bitmap = drawBoundingBoxes(bitmap, boundingBoxes)
-        Log.d("xxxxx", "onCreate: ${System.currentTimeMillis() - time}")
-        binding.sampleText.setImageBitmap(bitmap1)
+
+//        val bitmap = BitmapFactory.decodeResource(resources, R.drawable.d)
+//        val time = System.currentTimeMillis()
+//        val boxes = yolo6.detect(bitmap)
+//        val boundingBoxes: List<BoundingBox> = boxesToBoundingBoxes(boxes)
+//        val bitmap1: Bitmap = drawBoundingBoxes(bitmap, boundingBoxes)
+//        Log.d("xxxxx", "onCreate: ${System.currentTimeMillis() - time}")
+//        binding.sampleText.setImageBitmap(bitmap1)
     }
 
     private inner class Listener : CameraListener() {
