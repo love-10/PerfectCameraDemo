@@ -65,4 +65,5 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation("com.otaliastudios:cameraview:2.7.2")
+    implementation("io.github.afkt:DevAppX:2.4.6")
 }
