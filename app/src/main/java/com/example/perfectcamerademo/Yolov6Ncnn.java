@@ -38,6 +38,6 @@ public class Yolov6Ncnn
 //    };
 
     static {
-        System.loadLibrary("yolov6ncnn");
+        System.loadLibrary("detect");
     }
 }
