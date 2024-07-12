@@ -18,6 +18,9 @@
         app:cameraFacing="back"
         app:cameraFrameProcessingFormat="256"
         app:cameraMode="picture"
+        app:cameraGesturePinch="zoom"
+        app:cameraGestureScrollHorizontal="exposureCorrection"
+        app:cameraGestureScrollVertical="exposureCorrection"
         app:cameraPreview="glSurface" />
 
     <com.example.perfectcamerademo.TrackView

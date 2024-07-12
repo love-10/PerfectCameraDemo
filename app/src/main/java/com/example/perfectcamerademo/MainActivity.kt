@@ -12,6 +12,7 @@ import com.example.perfectcamerademo.databinding.ActivityMainBinding
 import com.otaliastudios.cameraview.CameraListener
 import com.otaliastudios.cameraview.CameraOptions
 import com.otaliastudios.cameraview.size.Size
+import dev.utils.app.ScreenUtils
 import dev.utils.app.image.BitmapUtils
 import java.io.ByteArrayOutputStream
 
@@ -20,7 +21,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val yolo6 by lazy {
         Yolov6Ncnn().apply {
-            loadModel(assets, 0, 0)
+            loadModel(assets, 4, 0)
         }
     }
 
@@ -34,12 +35,10 @@ class MainActivity : AppCompatActivity() {
         binding.cameraView.setPreviewStreamSize { mutableListOf(Size(1080, 1920)) }
         binding.cameraView.frameProcessingMaxWidth = 1080
         binding.cameraView.frameProcessingMaxHeight = 1920
-        binding.cameraView.post {
-            val params = binding.trackView.layoutParams
-            params.width = binding.cameraView.width
-            params.height = binding.cameraView.height
-            binding.trackView.layoutParams = params
-        }
+        val params = binding.trackView.layoutParams
+        params.width = ScreenUtils.getScreenWidth()
+        params.height = ScreenUtils.getScreenWidth()*16/9
+        binding.trackView.layoutParams = params
         binding.cameraView.addFrameProcessor { frame ->
             val data = frame.getData<ByteArray>()
             val yuvImage = YuvImage(
@@ -66,7 +65,7 @@ class MainActivity : AppCompatActivity() {
             val boxes =
                 yolo6.detect(BitmapUtils.reverseByHorizontal(BitmapUtils.rotate(bitmap, -90f)))
             val boundingBoxes = boxesToBoundingBoxes(boxes)
-            binding.trackView.update(applyNMS(boundingBoxes))
+            binding.trackView.update(boundingBoxes)
             Log.d("xxxxx", "time: ${System.currentTimeMillis() - time}")
 //            binding.sampleText.setImageBitmap()
         }

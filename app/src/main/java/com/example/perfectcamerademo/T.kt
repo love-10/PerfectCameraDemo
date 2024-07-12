@@ -18,7 +18,7 @@ fun applyNMS(boxes: List<BoundingBox>): MutableList<BoundingBox> {
         while (iterator.hasNext()) {
             val nextBox = iterator.next()
             val iou = calculateIoU(first, nextBox)
-            if (iou >= 0.5f) {
+            if (iou >= 0.3f) {
                 iterator.remove()
             }
         }
@@ -40,7 +40,7 @@ private fun calculateIoU(box1: BoundingBox, box2: BoundingBox): Float {
 fun boxesToBoundingBoxes(boxes: MutableList<Box>): MutableList<BoundingBox> {
     val r = mutableListOf<BoundingBox>()
     boxes.forEach {
-        if (it.label == 0 && it.prop > 0.9f) {
+        if (it.label == 0) {
             r.add(boxToBoundingBox(it))
         }
 
