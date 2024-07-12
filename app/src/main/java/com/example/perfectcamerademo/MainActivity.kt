@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.cameraView.setLifecycleOwner(this)
         yolo6.loadModel(assets, 0, 0)
         val bitmap = BitmapFactory.decodeResource(resources, R.drawable.d)
         val time = System.currentTimeMillis()
