@@ -74,8 +74,8 @@ bool BitmapToMatrix(JNIEnv *env, jobject obj_bitmap, cv::Mat &matrix) {
     return true;
 }
 
-extern "C" JNIEXPORT jobject JNICALL
-Java_com_example_tracker_Yolov6Ncnn_detect(JNIEnv *env, jobject thiz, jobject bitmap) {
+extern "C" jobject
+Java_com_example_perfectcamerademo_Yolov6Ncnn_detect(JNIEnv *env, jobject thiz, jobject bitmap) {
     cv::Mat mat;
     BitmapToMatrix(env, bitmap, mat);
     std::vector<Object> objects;
@@ -89,7 +89,7 @@ Java_com_example_tracker_Yolov6Ncnn_detect(JNIEnv *env, jobject thiz, jobject bi
     //或得Arraylist类中的 add()方法ID，其方法原型为： boolean add(Object object) ;
     jmethodID list_add = env->GetMethodID(list_cls, "add", "(Ljava/lang/Object;)Z");
 
-    jclass stu_cls = env->FindClass("com/example/tracker/Box");//获得Student类引用
+    jclass stu_cls = env->FindClass("com/example/perfectcamerademo/Box");//获得Student类引用
     //获得该类型的构造函数  函数名为 <init> 返回类型必须为 void 即 V
     jmethodID stu_costruct = env->GetMethodID(stu_cls, "<init>", "(FFFFFI)V");
 
@@ -121,8 +121,8 @@ JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) {
 }
 
 // public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
-JNIEXPORT jboolean JNICALL
-Java_com_example_tracker_Yolov6Ncnn_loadModel(JNIEnv *env, jobject thiz, jobject assetManager,
+extern "C" jboolean
+Java_com_example_perfectcamerademo_Yolov6Ncnn_loadModel(JNIEnv *env, jobject thiz, jobject assetManager,
                                                  jint modelid, jint cpugpu) {
     if (modelid < 0 || modelid > 4 || cpugpu < 0 || cpugpu > 1) {
         return JNI_FALSE;

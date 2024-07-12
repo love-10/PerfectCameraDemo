@@ -1,4 +1,4 @@
-package com.tencent.yolov6ncnn
+package com.example.perfectcamerademo
 
 import android.graphics.Bitmap
 import android.graphics.Canvas

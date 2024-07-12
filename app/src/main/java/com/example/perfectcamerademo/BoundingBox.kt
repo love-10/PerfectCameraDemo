@@ -1,4 +1,4 @@
-package com.tencent.yolov6ncnn
+package com.example.perfectcamerademo
 
 data class BoundingBox(
     val x1: Float,
