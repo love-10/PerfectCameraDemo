@@ -7,15 +7,15 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
 
-fun l2l(boxes: MutableList<Box>):MutableList<BoundingBox> {
+fun boxesToBoundingBoxes(boxes: MutableList<Box>): MutableList<BoundingBox> {
     val r = mutableListOf<BoundingBox>()
     boxes.forEach {
-        r.add(boxtobound(it))
+        r.add(boxToBoundingBox(it))
     }
     return r
 }
 
-fun boxtobound(box: Box): BoundingBox {
+fun boxToBoundingBox(box: Box): BoundingBox {
     return BoundingBox(
         box.x,
         box.y,
@@ -46,9 +46,9 @@ fun drawBoundingBoxes(bitmap: Bitmap, boxes: List<BoundingBox>): Bitmap {
     }
     for (box in boxes) {
         val rect = RectF(
-            box.x1 ,
-            box.y1 ,
-            box.x2 ,
+            box.x1,
+            box.y1,
+            box.x2,
             box.y2
         )
         canvas.drawRect(rect, paint)
