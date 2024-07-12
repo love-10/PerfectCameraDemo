@@ -12,4 +12,4 @@ find_package(ncnn REQUIRED)
 
 add_library(yolov6ncnn SHARED yolov6ncnn.cpp yolo.cpp)
 
-target_link_libraries(yolov6ncnn ncnn ${OpenCV_LIBS} camera2ndk mediandk)
+target_link_libraries(yolov6ncnn ncnn ${OpenCV_LIBS})
