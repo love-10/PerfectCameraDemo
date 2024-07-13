@@ -40,7 +40,7 @@ private fun calculateIoU(box1: BoundingBox, box2: BoundingBox): Float {
 fun boxesToBoundingBoxes(boxes: MutableList<Box>): MutableList<BoundingBox> {
     val r = mutableListOf<BoundingBox>()
     boxes.forEach {
-        if (it.label == 0) {
+        if (it.label == 0 && it.prop >= 0.5f) {
             r.add(boxToBoundingBox(it))
         }
 
