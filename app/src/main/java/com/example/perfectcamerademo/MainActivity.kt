@@ -1,29 +1,34 @@
 package com.example.perfectcamerademo
 
+import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
 import android.view.Surface
 import androidx.appcompat.app.AppCompatActivity
 import com.example.perfectcamerademo.databinding.ActivityMainBinding
+import com.google.gson.Gson
 import dev.utils.app.ScreenUtils
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val yolo6 by lazy {
+        Rect()
         Yolo6().apply {
-            loadModel(assets, 4, 0) {
+            loadModel(assets, 4, 0) { bitmap, boxes ->
                 runOnUiThread {
-                    binding.img.setImageBitmap(it)
+//                    binding.img.setImageBitmap(bitmap)
+                    binding.trackView.update(boxesToBoundingBoxes(boxes))
                 }
-                Log.d("xxxxx", "sizesize ${it.width} * ${it.height}")
+                Log.d("xxxxx", "sizesize ${bitmap.width} * ${bitmap.height}")
+                Log.d("xxxxx", "box ${Gson().toJson(boxes)}")
             }
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        Box(0f, 0f, 0f, 0f, 0f, 0)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.cameraview.onSurfaceChangedListener =

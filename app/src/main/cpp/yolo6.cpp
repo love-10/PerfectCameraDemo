@@ -43,6 +43,8 @@ JavaVM *g_vm = NULL;
 jclass bClz;
 jobject bObj;
 
+jclass sClz;
+
 static int draw_unsupported(cv::Mat &rgb) {
     const char text[] = "unsupported";
 
@@ -160,7 +162,7 @@ jobject mattobitmap(JNIEnv *env, cv::Mat mat) {
     return bitmap;
 }
 
-void bitmapCallBack(cv::Mat &rgb){
+void bitmapCallBack(cv::Mat &rgb, std::vector<Object> objects) {
     JNIEnv *env;
     if (g_vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) {
         // 当前线程不附加到JavaVM，需要附加它
@@ -170,12 +172,33 @@ void bitmapCallBack(cv::Mat &rgb){
     }
     // 使用全局引用进行操作
     if (bObj != NULL) {
-        // 执行需要的JNI操作，例如调用Java方法
-//        jclass clazz = (*env).GetObjectClass(bObj);
-        jmethodID methodID = (*env).GetMethodID(bClz, "onBitmap", "(Landroid/graphics/Bitmap;)V");
+        jclass list_cls = env->FindClass("java/util/ArrayList");//获得ArrayList类引用
+
+        jmethodID list_costruct = env->GetMethodID(list_cls, "<init>", "()V"); //获得得构造函数Id
+
+        jobject list_obj = env->NewObject(list_cls, list_costruct); //创建一个Arraylist集合对象
+        //或得Arraylist类中的 add()方法ID，其方法原型为： boolean add(Object object) ;
+        jmethodID list_add = env->GetMethodID(list_cls, "add", "(Ljava/lang/Object;)Z");
+
+//        获得该类型的构造函数  函数名为 <init> 返回类型必须为 void 即 V
+        jmethodID stu_costruct = env->GetMethodID(sClz, "<init>", "(FFFFFI)V");
+
+        for (int i = 0; i < objects.size(); i++) {
+            const Object &obj = objects[i];
+            //通过调用该对象的构造函数来new 一个 Student实例
+            jobject stu_obj = env->NewObject(sClz, stu_costruct, obj.rect.x, obj.rect.y,
+                                             obj.rect.width, obj.rect.height, obj.prob,
+                                             obj.label);  //构造一个对象
+
+            env->CallBooleanMethod(list_obj, list_add, stu_obj); //执行Arraylist类实例的add方法，添加一个stu对象
+        }
+
+//         执行需要的JNI操作，例如调用Java方法
+        jmethodID methodID = (*env).GetMethodID(bClz, "onBitmap",
+                                                "(Landroid/graphics/Bitmap;Ljava/util/ArrayList;)V");
         jobject bitmap = mattobitmap(env, rgb);
         if (methodID != NULL) {
-            (*env).CallVoidMethod(bObj, methodID, bitmap);
+            (*env).CallVoidMethod(bObj, methodID, bitmap, list_obj);
         }
     }
     // 在这里使用env指针执行需要的JNI操作
@@ -194,12 +217,11 @@ public:
 
 void MyNdkCamera::on_image_render(cv::Mat &rgb) const {
     // nanodet
-    bitmapCallBack(rgb);
+    std::vector<Object> objects;
     {
         ncnn::MutexLockGuard g(lock);
 
         if (g_yolo) {
-            std::vector<Object> objects;
 
             g_yolo->detect(rgb, objects);
 
@@ -208,7 +230,7 @@ void MyNdkCamera::on_image_render(cv::Mat &rgb) const {
             draw_unsupported(rgb);
         }
     }
-
+    bitmapCallBack(rgb, objects);
     draw_fps(rgb);
 }
 
@@ -249,6 +271,9 @@ Java_com_example_perfectcamerademo_Yolo6_loadModel(JNIEnv *env, jobject thiz, jo
     jclass clz = (*env).GetObjectClass(bCallBack);
     bClz = static_cast<jclass>((*env).NewGlobalRef(clz));
     bObj = (*env).NewGlobalRef(bCallBack);
+    jclass stu_cls = env->FindClass("com/example/perfectcamerademo/Box");//获得Student类引用
+    sClz = static_cast<jclass>((*env).NewGlobalRef(stu_cls));
+
 
     AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);
 
