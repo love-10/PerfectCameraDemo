@@ -11,7 +11,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val yolo6 by lazy {
         Yolo6().apply {
-            loadModel(assets, 4, 0)
+            loadModel(assets, 4, 0) {
+
+            }
         }
     }
 
