@@ -31,27 +31,6 @@
 
     </LinearLayout>
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
-
-        <Spinner
-            android:id="@+id/spinnerModel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawSelectorOnTop="true"
-            android:entries="@array/model_array" />
-
-    <Spinner
-        android:id="@+id/spinnerCPUGPU"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:drawSelectorOnTop="true"
-        android:entries="@array/cpugpu_array" />
-
-    </LinearLayout>
-
     <SurfaceView
         android:id="@+id/cameraview"
         android:layout_width="fill_parent"

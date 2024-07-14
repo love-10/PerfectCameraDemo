@@ -22,22 +22,13 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.Spinner;
 
 public class TheActivity extends Activity implements SurfaceHolder.Callback
 {
-    public static final int REQUEST_CAMERA = 100;
 
     private Yolo6 yolov6ncnn = new Yolo6();
     private int facing = 0;
-
-    private Spinner spinnerModel;
-    private Spinner spinnerCPUGPU;
-    private int current_model = 0;
-    private int current_cpugpu = 0;
-
     private SurfaceView cameraView;
 
     /** Called when the activity is first created. */
@@ -69,48 +60,12 @@ public class TheActivity extends Activity implements SurfaceHolder.Callback
             }
         });
 
-        spinnerModel = (Spinner) findViewById(R.id.spinnerModel);
-        spinnerModel.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> arg0, View arg1, int position, long id)
-            {
-                if (position != current_model)
-                {
-                    current_model = position;
-                    reload();
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> arg0)
-            {
-            }
-        });
-
-        spinnerCPUGPU = (Spinner) findViewById(R.id.spinnerCPUGPU);
-        spinnerCPUGPU.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> arg0, View arg1, int position, long id)
-            {
-                if (position != current_cpugpu)
-                {
-                    current_cpugpu = position;
-                    reload();
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> arg0)
-            {
-            }
-        });
-
         reload();
     }
 
     private void reload()
     {
-        boolean ret_init = yolov6ncnn.loadModel(getAssets(), current_model, current_cpugpu);
+        boolean ret_init = yolov6ncnn.loadModel(getAssets(), 0, 0);
         if (!ret_init)
         {
             Log.e("MainActivity", "yolov6ncnn loadModel failed");
