@@ -1,38 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-
-    <com.otaliastudios.cameraview.CameraView
-        android:id="@+id/camera_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <SurfaceView
+        android:id="@+id/cameraview"
         android:layout_centerInParent="true"
-        app:cameraAudio="off"
-        app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker"
-        app:cameraEngine="camera2"
-        app:cameraFacing="back"
-        app:cameraFrameProcessingFormat="256"
-        app:cameraMode="picture"
-        app:cameraGesturePinch="zoom"
-        app:cameraGestureScrollHorizontal="exposureCorrection"
-        app:cameraGestureScrollVertical="exposureCorrection"
-        app:cameraPreview="glSurface" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
     <com.example.perfectcamerademo.TrackView
         android:id="@+id/track_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true" />
-
-    <ImageView
-        android:id="@+id/sample_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true" />
-
 </RelativeLayout>
