@@ -25,6 +25,6 @@ public class Yolo6
     public native boolean setOutputWindow(Surface surface);
 
     static {
-        System.loadLibrary("yolov6ncnn");
+        System.loadLibrary("yolo6");
     }
 }
