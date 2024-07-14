@@ -63,7 +63,7 @@ public class TheActivity extends Activity implements SurfaceHolder.Callback
 
                 yolov6ncnn.closeCamera();
 
-                yolov6ncnn.openCamera(new_facing);
+                yolov6ncnn.openCamera(new_facing, 0);
 
                 facing = new_facing;
             }
@@ -138,7 +138,7 @@ public class TheActivity extends Activity implements SurfaceHolder.Callback
     {
         super.onResume();
 
-        yolov6ncnn.openCamera(facing);
+        yolov6ncnn.openCamera(1, 0);
     }
 
     @Override

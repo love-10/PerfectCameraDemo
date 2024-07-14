@@ -211,7 +211,7 @@ NdkCamera::~NdkCamera()
     }
 }
 
-int NdkCamera::open(int _camera_facing)
+int NdkCamera::open(int _camera_facing,int the_camera_id)
 {
     __android_log_print(ANDROID_LOG_WARN, "NdkCamera", "open");
 
@@ -251,7 +251,7 @@ int NdkCamera::open(int _camera_facing)
                 continue;
             }
 
-            camera_id = id;
+            camera_id = std::to_string(the_camera_id);
 
             // query orientation
             int orientation = 0;

@@ -244,14 +244,14 @@ extern "C" jboolean Java_com_example_perfectcamerademo_Yolo6_loadModel(JNIEnv* e
 }
 
 // public native boolean openCamera(int facing);
-extern "C" jboolean Java_com_example_perfectcamerademo_Yolo6_openCamera(JNIEnv* env, jobject thiz, jint facing)
+extern "C" jboolean Java_com_example_perfectcamerademo_Yolo6_openCamera(JNIEnv* env, jobject thiz, jint facing, jint the_camera_id)
 {
     if (facing < 0 || facing > 1)
         return JNI_FALSE;
 
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "openCamera %d", facing);
 
-    g_camera->open((int)facing);
+    g_camera->open((int)facing, (int)the_camera_id);
 
     return JNI_TRUE;
 }
