@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Rect
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
@@ -25,17 +24,17 @@ class TrackView(context: Context, attributeSet: AttributeSet) : View(context, at
     }
     val rects = mutableListOf<RectF>()
     val props = mutableListOf<String>()
-    fun update(boxes: MutableList<BoundingBox>) {
+    fun update(boxes: List<Box>) {
         rects.clear()
         props.clear()
         boxes.forEach {
             val scale = width / 1080
-            val x1 = it.x1 * scale
-            val y1 = it.y1 * scale
-            val x2 = it.x2 * scale
-            val y2 = it.y2 * scale
+            val x1 = it.x * scale
+            val y1 = it.y * scale
+            val x2 = (it.x + it.width) * scale
+            val y2 = (it.y + it.height) * scale
             rects.add(RectF(x1, y1, x2, y2))
-            props.add("${it.cnf * 100}%")
+            props.add("${it.prop * 100}%")
         }
         invalidate()
     }

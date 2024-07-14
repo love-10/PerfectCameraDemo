@@ -18,7 +18,7 @@ class MainActivity : AppCompatActivity() {
             loadModel(assets, 4, 0) { bitmap, boxes ->
                 runOnUiThread {
 //                    binding.img.setImageBitmap(bitmap)
-                    binding.trackView.update(boxesToBoundingBoxes(boxes))
+                    binding.trackView.update(boxes.filter { it.label == 0 && it.prop > 0.7f })
                 }
                 Log.d("xxxxx", "sizesize ${bitmap.width} * ${bitmap.height}")
                 Log.d("xxxxx", "box ${Gson().toJson(boxes)}")
@@ -28,7 +28,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Box(0f, 0f, 0f, 0f, 0f, 0)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.cameraview.onSurfaceChangedListener =
