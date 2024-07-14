@@ -17,7 +17,7 @@ class MainActivity : AppCompatActivity() {
         Yolo6().apply {
             loadModel(assets, 4, 0) { bitmap, boxes ->
                 runOnUiThread {
-                    binding.img.setImageBitmap(bitmap)
+//                    binding.img.setImageBitmap(bitmap)
                     binding.trackView.update(boxes.filter { it.label == 0 })
                 }
                 Log.d("xxxxx", "sizesize ${bitmap.width} * ${bitmap.height}")
