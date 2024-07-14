@@ -63,7 +63,7 @@ public:
 
     void set_window(ANativeWindow* win);
 
-    virtual void on_image_render(cv::Mat& rgb) const;
+    virtual void on_image_render(cv::Mat& rgb,unsigned char * origin) const;
 
     virtual void on_image(const unsigned char* nv21, int nv21_width, int nv21_height) const;
 

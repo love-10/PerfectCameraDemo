@@ -15,7 +15,7 @@
         android:id="@+id/img"
         android:layout_centerInParent="true"
         android:layout_width="match_parent"
-        android:layout_height="500dp" />
+        android:layout_height="wrap_content" />
 
     <com.example.perfectcamerademo.TrackView
         android:id="@+id/track_view"

@@ -162,7 +162,56 @@ jobject mattobitmap(JNIEnv *env, cv::Mat mat) {
     return bitmap;
 }
 
-void bitmapCallBack(cv::Mat &rgb, std::vector<Object> objects) {
+jobject NV21ToBitmap(JNIEnv *env, unsigned char *nv21, int width, int height) {
+// 创建Mat对象用于存储NV21数据
+    cv::Mat nv21Mat(height + height / 2, width, CV_8UC1, (unsigned char *) nv21);
+
+// 创建一个RGB Mat对象用于存储转换后的数据
+    cv::Mat rgbMat(height, width, CV_8UC3);
+
+// 将NV21转换为RGB
+    cvtColor(nv21Mat, rgbMat, cv::COLOR_YUV2RGB_NV21);
+
+// 创建一个空的Bitmap对象
+    jobject bitmap;
+    AndroidBitmapInfo info;
+    void *pixels;
+
+// 获取Bitmap类和创建方法ID
+    jclass bitmapClass = env->FindClass("android/graphics/Bitmap");
+    jmethodID createBitmapMethod = env->GetStaticMethodID(bitmapClass, "createBitmap",
+                                                          "(IILandroid/graphics/Bitmap$Config;)Landroid/graphics/Bitmap;");
+    jstring configName = env->NewStringUTF("RGB_565");
+    jclass bitmapConfigClass = env->FindClass("android/graphics/Bitmap$Config");
+    jmethodID valueOfMethod = env->GetStaticMethodID(bitmapConfigClass, "valueOf",
+                                                     "(Ljava/lang/String;)Landroid/graphics/Bitmap$Config;");
+    jobject bitmapConfig = env->CallStaticObjectMethod(bitmapConfigClass, valueOfMethod,
+                                                       configName);
+    bitmap = env->CallStaticObjectMethod(bitmapClass, createBitmapMethod, width, height,
+                                         bitmapConfig);
+
+// 锁定Bitmap像素进行操作
+    if (AndroidBitmap_getInfo(env, bitmap, &info) < 0) {
+        return nullptr;
+    }
+    if (info.format != ANDROID_BITMAP_FORMAT_RGB_565) {
+        return nullptr;
+    }
+    if (AndroidBitmap_lockPixels(env, bitmap, &pixels) < 0) {
+        return nullptr;
+    }
+
+// 将RGB Mat数据复制到Bitmap
+    cv::Mat temp(info.height, info.width, CV_8UC2, pixels);
+    cvtColor(rgbMat, temp, cv::COLOR_RGB2BGR565);
+
+// 解锁Bitmap像素
+    AndroidBitmap_unlockPixels(env, bitmap);
+
+    return bitmap;
+}
+
+void bitmapCallBack(cv::Mat &rgb, std::vector<Object> objects, unsigned char *origin) {
     JNIEnv *env;
     if (g_vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) {
         // 当前线程不附加到JavaVM，需要附加它
@@ -196,7 +245,7 @@ void bitmapCallBack(cv::Mat &rgb, std::vector<Object> objects) {
 //         执行需要的JNI操作，例如调用Java方法
         jmethodID methodID = (*env).GetMethodID(bClz, "onBitmap",
                                                 "(Landroid/graphics/Bitmap;Ljava/util/ArrayList;)V");
-        jobject bitmap = mattobitmap(env, rgb);
+        jobject bitmap = NV21ToBitmap(env, origin, 1080, 1920);
         if (methodID != NULL) {
             (*env).CallVoidMethod(bObj, methodID, bitmap, list_obj);
         }
@@ -212,10 +261,10 @@ static ncnn::Mutex lock;
 
 class MyNdkCamera : public NdkCameraWindow {
 public:
-    virtual void on_image_render(cv::Mat &rgb) const;
+    virtual void on_image_render(cv::Mat &rgb, unsigned char*origin) const;
 };
 
-void MyNdkCamera::on_image_render(cv::Mat &rgb) const {
+void MyNdkCamera::on_image_render(cv::Mat &rgb, unsigned char *origin) const {
     // nanodet
     std::vector<Object> objects;
     {
@@ -230,7 +279,7 @@ void MyNdkCamera::on_image_render(cv::Mat &rgb) const {
             draw_unsupported(rgb);
         }
     }
-    bitmapCallBack(rgb, objects);
+    bitmapCallBack(rgb, objects, origin);
     //draw_fps(rgb);
 }
 
