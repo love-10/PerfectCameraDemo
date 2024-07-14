@@ -18,7 +18,7 @@ class MainActivity : AppCompatActivity() {
             loadModel(assets, 4, 0) { bitmap, boxes ->
                 runOnUiThread {
 //                    binding.img.setImageBitmap(bitmap)
-                    binding.trackView.update(boxes.filter { it.label == 0 && it.prop > 0.7f })
+                    binding.trackView.update(boxes.filter { it.label == 0 })
                 }
                 Log.d("xxxxx", "sizesize ${bitmap.width} * ${bitmap.height}")
                 Log.d("xxxxx", "box ${Gson().toJson(boxes)}")
