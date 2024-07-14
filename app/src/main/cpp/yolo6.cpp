@@ -225,13 +225,13 @@ void MyNdkCamera::on_image_render(cv::Mat &rgb) const {
 
             g_yolo->detect(rgb, objects);
 
-            g_yolo->draw(rgb, objects);
+            //g_yolo->draw(rgb, objects);
         } else {
             draw_unsupported(rgb);
         }
     }
     bitmapCallBack(rgb, objects);
-    draw_fps(rgb);
+    //draw_fps(rgb);
 }
 
 static MyNdkCamera *g_camera = 0;
