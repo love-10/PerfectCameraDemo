@@ -28,88 +28,135 @@
 
 #include "yolo.h"
 
+#include "ndkcamera.h"
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
 #if __ARM_NEON
-
 #include <arm_neon.h>
-
 #endif // __ARM_NEON
 
-static Yolo *g_yolo = 0;
+static int draw_unsupported(cv::Mat& rgb)
+{
+    const char text[] = "unsupported";
+
+    int baseLine = 0;
+    cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 1.0, 1, &baseLine);
+
+    int y = (rgb.rows - label_size.height) / 2;
+    int x = (rgb.cols - label_size.width) / 2;
+
+    cv::rectangle(rgb, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)),
+                    cv::Scalar(255, 255, 255), -1);
+
+    cv::putText(rgb, text, cv::Point(x, y + label_size.height),
+                cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0));
+
+    return 0;
+}
+
+static int draw_fps(cv::Mat& rgb)
+{
+    // resolve moving average
+    float avg_fps = 0.f;
+    {
+        static double t0 = 0.f;
+        static float fps_history[10] = {0.f};
+
+        double t1 = ncnn::get_current_time();
+        if (t0 == 0.f)
+        {
+            t0 = t1;
+            return 0;
+        }
+
+        float fps = 1000.f / (t1 - t0);
+        t0 = t1;
+
+        for (int i = 9; i >= 1; i--)
+        {
+            fps_history[i] = fps_history[i - 1];
+        }
+        fps_history[0] = fps;
+
+        if (fps_history[9] == 0.f)
+        {
+            return 0;
+        }
+
+        for (int i = 0; i < 10; i++)
+        {
+            avg_fps += fps_history[i];
+        }
+        avg_fps /= 10.f;
+    }
+
+    char text[32];
+    sprintf(text, "FPS=%.2f", avg_fps);
+
+    int baseLine = 0;
+    cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
+
+    int y = 0;
+    int x = rgb.cols - label_size.width;
+
+    cv::rectangle(rgb, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)),
+                    cv::Scalar(255, 255, 255), -1);
+
+    cv::putText(rgb, text, cv::Point(x, y + label_size.height),
+                cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
+
+    return 0;
+}
+
+static Yolo* g_yolo = 0;
 static ncnn::Mutex lock;
 
-#define ASSERT(status, ret)     if (!(status)) { return ret; }
-#define ASSERT_FALSE(status)    ASSERT(status, false)
+class MyNdkCamera : public NdkCameraWindow
+{
+public:
+    virtual void on_image_render(cv::Mat& rgb) const;
+};
 
+void MyNdkCamera::on_image_render(cv::Mat& rgb) const
+{
+    // nanodet
+    {
+        ncnn::MutexLockGuard g(lock);
 
-bool BitmapToMatrix(JNIEnv *env, jobject obj_bitmap, cv::Mat &matrix) {
-    void *bitmapPixels;                                            // Save picture pixel data
-    AndroidBitmapInfo bitmapInfo;                                   // Save picture parameters
+        if (g_yolo)
+        {
+            std::vector<Object> objects;
 
-    ASSERT_FALSE(AndroidBitmap_getInfo(env, obj_bitmap, &bitmapInfo) >=
-                 0)        // Get picture parameters
-    ASSERT_FALSE(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888
-                 || bitmapInfo.format ==
-                    ANDROID_BITMAP_FORMAT_RGB_565)         // Only ARGB? 8888 and RGB? 565 are supported
-    ASSERT_FALSE(AndroidBitmap_lockPixels(env, obj_bitmap, &bitmapPixels) >=
-                 0) // Get picture pixels (lock memory block)
-    ASSERT_FALSE(bitmapPixels)
+            g_yolo->detect(rgb, objects);
 
-    if (bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
-        cv::Mat tmp(bitmapInfo.height, bitmapInfo.width, CV_8UC4,
-                    bitmapPixels);    // Establish temporary mat
-        tmp.copyTo(
-                matrix);                                                         // Copy to target matrix
-    } else {
-        cv::Mat tmp(bitmapInfo.height, bitmapInfo.width, CV_8UC2, bitmapPixels);
-        cv::cvtColor(tmp, matrix, cv::COLOR_BGR5652RGB);
+            g_yolo->draw(rgb, objects);
+        }
+        else
+        {
+            draw_unsupported(rgb);
+        }
     }
 
-    //convert RGB to BGR
-    cv::cvtColor(matrix, matrix, cv::COLOR_RGB2BGR);
-
-    AndroidBitmap_unlockPixels(env, obj_bitmap);            // Unlock
-    return true;
+    draw_fps(rgb);
 }
 
-extern "C" jobject
-Java_com_example_perfectcamerademo_Yolov6Ncnn_detect(JNIEnv *env, jobject thiz, jobject bitmap) {
-    cv::Mat mat;
-    BitmapToMatrix(env, bitmap, mat);
-    std::vector<Object> objects;
-    g_yolo->detect(mat, objects);
-
-    jclass list_cls = env->FindClass("java/util/ArrayList");//获得ArrayList类引用
-
-    jmethodID list_costruct = env->GetMethodID(list_cls, "<init>", "()V"); //获得得构造函数Id
-
-    jobject list_obj = env->NewObject(list_cls, list_costruct); //创建一个Arraylist集合对象
-    //或得Arraylist类中的 add()方法ID，其方法原型为： boolean add(Object object) ;
-    jmethodID list_add = env->GetMethodID(list_cls, "add", "(Ljava/lang/Object;)Z");
-
-    jclass stu_cls = env->FindClass("com/example/perfectcamerademo/Box");//获得Student类引用
-    //获得该类型的构造函数  函数名为 <init> 返回类型必须为 void 即 V
-    jmethodID stu_costruct = env->GetMethodID(stu_cls, "<init>", "(FFFFFI)V");
-
-    for (int i = 0; i < objects.size(); i++) {
-        const Object &obj = objects[i];
-        //通过调用该对象的构造函数来new 一个 Student实例
-        jobject stu_obj = env->NewObject(stu_cls, stu_costruct, obj.rect.x, obj.rect.y,
-                                         obj.rect.width, obj.rect.height, obj.prob,
-                                         obj.label);  //构造一个对象
-
-        env->CallBooleanMethod(list_obj, list_add, stu_obj); //执行Arraylist类实例的add方法，添加一个stu对象
-    }
-
-    return list_obj;
-}
-
+static MyNdkCamera* g_camera = 0;
 
 extern "C" {
 
-JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) {
+JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
+{
+    __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "JNI_OnLoad");
+
+    g_camera = new MyNdkCamera;
+
+    return JNI_VERSION_1_4;
+}
+
+JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved)
+{
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "JNI_OnUnload");
 
     {
@@ -118,76 +165,117 @@ JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) {
         delete g_yolo;
         g_yolo = 0;
     }
+
+    delete g_camera;
+    g_camera = 0;
 }
 
 // public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
-extern "C" jboolean
-Java_com_example_perfectcamerademo_Yolov6Ncnn_loadModel(JNIEnv *env, jobject thiz, jobject assetManager,
-                                                 jint modelid, jint cpugpu) {
-    if (modelid < 0 || modelid > 4 || cpugpu < 0 || cpugpu > 1) {
+extern "C" jboolean Java_com_example_perfectcamerademo_Yolo6_loadModel(JNIEnv* env, jobject thiz, jobject assetManager, jint modelid, jint cpugpu)
+{
+    if (modelid < 0 || modelid > 4 || cpugpu < 0 || cpugpu > 1)
+    {
         return JNI_FALSE;
     }
 
-    AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);
+    AAssetManager* mgr = AAssetManager_fromJava(env, assetManager);
 
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "loadModel %p", mgr);
 
-    const char *modeltypes[] =
-            {
-                    "lite-s",
-                    "lite-m",
-                    "lite-l0",
-                    "lite-l1",
-                    "lite-l2",
-            };
+    const char* modeltypes[] =
+    {
+        "lite-s",
+        "lite-m",
+        "lite-l0",
+        "lite-l1",
+        "lite-l2",
+    };
 
     const int target_sizes[][2] =
-            {
-                    {320, 320},
-                    {320, 320},
-                    {320, 320},
-                    {320, 192},
-                    {224, 128}
-            };
+    {
+        {320, 320},
+        {320, 320},
+        {320, 320},
+        {320, 192},
+        {224, 128}
+    };
 
     const float mean_vals[][3] =
-            {
-                    {0.f, 0.f, 0.f},
-                    {0.f, 0.f, 0.f},
-                    {0.f, 0.f, 0.f},
-                    {0.f, 0.f, 0.f},
-                    {0.f, 0.f, 0.f}
-            };
+    {
+        {0.f, 0.f, 0.f},
+        {0.f, 0.f, 0.f},
+        {0.f, 0.f, 0.f},
+        {0.f, 0.f, 0.f},
+        {0.f, 0.f, 0.f}
+    };
 
     const float norm_vals[][3] =
-            {
-                    {1 / 255.f, 1 / 255.f, 1 / 255.f},
-                    {1 / 255.f, 1 / 255.f, 1 / 255.f},
-                    {1 / 255.f, 1 / 255.f, 1 / 255.f},
-                    {1 / 255.f, 1 / 255.f, 1 / 255.f},
-                    {1 / 255.f, 1 / 255.f, 1 / 255.f}
-            };
+    {
+        { 1 / 255.f, 1 / 255.f, 1 / 255.f },
+        { 1 / 255.f, 1 / 255.f, 1 / 255.f },
+        { 1 / 255.f, 1 / 255.f, 1 / 255.f },
+        { 1 / 255.f, 1 / 255.f, 1 / 255.f },
+        { 1 / 255.f, 1 / 255.f, 1 / 255.f }
+    };
 
-    const char *modeltype = modeltypes[(int) modelid];
-    const int *target_size = target_sizes[(int) modelid];
-    bool use_gpu = (int) cpugpu == 1;
+    const char* modeltype = modeltypes[(int)modelid];
+    const int *target_size = target_sizes[(int)modelid];
+    bool use_gpu = (int)cpugpu == 1;
 
     // reload
     {
         ncnn::MutexLockGuard g(lock);
 
-        if (use_gpu && ncnn::get_gpu_count() == 0) {
+        if (use_gpu && ncnn::get_gpu_count() == 0)
+        {
             // no gpu
             delete g_yolo;
             g_yolo = 0;
-        } else {
+        }
+        else
+        {
             if (!g_yolo)
                 g_yolo = new Yolo;
-            g_yolo->load(mgr, modeltype, target_size, mean_vals[(int) modelid],
-                         norm_vals[(int) modelid], use_gpu);
+            g_yolo->load(mgr, modeltype, target_size, mean_vals[(int)modelid], norm_vals[(int)modelid], use_gpu);
         }
     }
 
     return JNI_TRUE;
 }
+
+// public native boolean openCamera(int facing);
+extern "C" jboolean Java_com_example_perfectcamerademo_Yolo6_openCamera(JNIEnv* env, jobject thiz, jint facing)
+{
+    if (facing < 0 || facing > 1)
+        return JNI_FALSE;
+
+    __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "openCamera %d", facing);
+
+    g_camera->open((int)facing);
+
+    return JNI_TRUE;
+}
+
+// public native boolean closeCamera();
+extern "C" jboolean Java_com_example_perfectcamerademo_Yolo6_closeCamera(JNIEnv* env, jobject thiz)
+{
+    __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "closeCamera");
+
+    g_camera->close();
+
+    return JNI_TRUE;
+}
+
+// public native boolean setOutputWindow(Surface surface);
+extern "C" jboolean Java_com_example_perfectcamerademo_Yolo6_setOutputWindow(JNIEnv* env, jobject thiz, jobject surface)
+{
+    ANativeWindow* win = ANativeWindow_fromSurface(env, surface);
+
+    __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "setOutputWindow %p", win);
+
+    g_camera->set_window(win);
+
+    return JNI_TRUE;
+}
+
 }

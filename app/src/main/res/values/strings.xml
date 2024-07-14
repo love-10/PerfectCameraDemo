@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">PerfectCameraDemo</string>
+    <string-array name="model_array">
+        <item>lite-s</item>
+        <item>lite-m</item>
+        <item>lite-l0</item>
+        <item>lite-l1</item>
+        <item>lite-l2</item>
+    </string-array>
+    <string-array name="cpugpu_array">
+        <item>CPU</item>
+        <item>GPU</item>
+    </string-array>
 </resources>
