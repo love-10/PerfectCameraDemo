@@ -39,6 +39,7 @@
 
 #endif // __ARM_NEON
 
+JavaVM *g_vm = NULL;
 jclass bClz;
 jobject bObj;
 
@@ -111,6 +112,54 @@ static int draw_fps(cv::Mat &rgb) {
     return 0;
 }
 
+jobject mattobitmap(JNIEnv *env, cv::Mat mat) {
+// 从传递的地址获取Mat对象
+
+
+// 创建一个空的Bitmap对象
+    jobject bitmap;
+    AndroidBitmapInfo info;
+    void *pixels;
+
+    int width = mat.cols;
+    int height = mat.rows;
+
+// 创建Bitmap对象
+    jclass bitmapClass = env->FindClass("android/graphics/Bitmap");
+    jmethodID createBitmapMethod = env->GetStaticMethodID(bitmapClass, "createBitmap",
+                                                          "(IILandroid/graphics/Bitmap$Config;)Landroid/graphics/Bitmap;");
+    jstring configName = env->NewStringUTF("ARGB_8888");
+    jclass bitmapConfigClass = env->FindClass("android/graphics/Bitmap$Config");
+    jmethodID valueOfMethod = env->GetStaticMethodID(bitmapConfigClass, "valueOf",
+                                                     "(Ljava/lang/String;)Landroid/graphics/Bitmap$Config;");
+    jobject bitmapConfig = env->CallStaticObjectMethod(bitmapConfigClass, valueOfMethod,
+                                                       configName);
+    bitmap = env->CallStaticObjectMethod(bitmapClass, createBitmapMethod, width, height,
+                                         bitmapConfig);
+
+// 将Mat对象转换为Bitmap
+    if (AndroidBitmap_getInfo(env, bitmap, &info) < 0) {
+        return nullptr;
+    }
+    if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
+        return nullptr;
+    }
+    if (AndroidBitmap_lockPixels(env, bitmap, &pixels) < 0) {
+        return nullptr;
+    }
+    cv::Mat temp(info.height, info.width, CV_8UC4, pixels);
+    if (mat.type() == CV_8UC1) {
+        cvtColor(mat, temp, cv::COLOR_GRAY2RGBA);
+    } else if (mat.type() == CV_8UC3) {
+        cvtColor(mat, temp, cv::COLOR_BGR2RGBA);
+    } else if (mat.type() == CV_8UC4) {
+        mat.copyTo(temp);
+    }
+    AndroidBitmap_unlockPixels(env, bitmap);
+
+    return bitmap;
+}
+
 static Yolo *g_yolo = 0;
 static ncnn::Mutex lock;
 
@@ -120,6 +169,27 @@ public:
 };
 
 void MyNdkCamera::on_image_render(cv::Mat &rgb) const {
+    JNIEnv *env;
+    if (g_vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) {
+        // 当前线程不附加到JavaVM，需要附加它
+        if (g_vm->AttachCurrentThread(reinterpret_cast<JNIEnv **>((void **) &env), NULL) != 0) {
+            // 无法附加线程，处理错误
+        }
+    }
+    // 使用全局引用进行操作
+    if (bObj != NULL) {
+        // 执行需要的JNI操作，例如调用Java方法
+//        jclass clazz = (*env).GetObjectClass(bObj);
+        jmethodID methodID = (*env).GetMethodID(bClz, "onBitmap", "(Landroid/graphics/Bitmap;)V");
+        jobject bitmap = mattobitmap(env, rgb);
+        if (methodID != NULL) {
+            (*env).CallVoidMethod(bObj, methodID, bitmap);
+        }
+    }
+    // 在这里使用env指针执行需要的JNI操作
+
+    // 完成后，如果线程不是由JavaVM附加的，需要分离它
+    g_vm->DetachCurrentThread();
     // nanodet
     {
         ncnn::MutexLockGuard g(lock);
@@ -144,7 +214,7 @@ extern "C" {
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "JNI_OnLoad");
-
+    g_vm = vm;
     g_camera = new MyNdkCamera;
 
     return JNI_VERSION_1_4;

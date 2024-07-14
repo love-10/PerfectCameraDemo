@@ -1,6 +1,7 @@
 package com.example.perfectcamerademo
 
 import android.os.Bundle
+import android.util.Log
 import android.view.Surface
 import androidx.appcompat.app.AppCompatActivity
 import com.example.perfectcamerademo.databinding.ActivityMainBinding
@@ -12,7 +13,10 @@ class MainActivity : AppCompatActivity() {
     private val yolo6 by lazy {
         Yolo6().apply {
             loadModel(assets, 4, 0) {
-
+                runOnUiThread {
+                    binding.img.setImageBitmap(it)
+                }
+                Log.d("xxxxx", "sizesize ${it.width} * ${it.height}")
             }
         }
     }
