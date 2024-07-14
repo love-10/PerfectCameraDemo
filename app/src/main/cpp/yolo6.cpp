@@ -211,7 +211,7 @@ jobject NV21ToBitmap(JNIEnv *env, unsigned char *nv21, int width, int height) {
     return bitmap;
 }
 
-void bitmapCallBack(cv::Mat &rgb, std::vector<Object> objects, unsigned char *origin) {
+void bitmapCallBack(cv::Mat &rgb, std::vector<Object> objects, unsigned char *origin,int width, int height) {
     JNIEnv *env;
     if (g_vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) {
         // 当前线程不附加到JavaVM，需要附加它
@@ -261,10 +261,10 @@ static ncnn::Mutex lock;
 
 class MyNdkCamera : public NdkCameraWindow {
 public:
-    virtual void on_image_render(cv::Mat &rgb, unsigned char*origin) const;
+    virtual void on_image_render(cv::Mat &rgb, unsigned char*origin, int width, int height) const;
 };
 
-void MyNdkCamera::on_image_render(cv::Mat &rgb, unsigned char *origin) const {
+void MyNdkCamera::on_image_render(cv::Mat &rgb, unsigned char *origin,int width, int height) const {
     // nanodet
     std::vector<Object> objects;
     {
@@ -279,7 +279,7 @@ void MyNdkCamera::on_image_render(cv::Mat &rgb, unsigned char *origin) const {
             draw_unsupported(rgb);
         }
     }
-    bitmapCallBack(rgb, objects, origin);
+    bitmapCallBack(rgb, objects, origin, width, height);
     //draw_fps(rgb);
 }
 

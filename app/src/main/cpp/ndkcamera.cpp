@@ -467,7 +467,7 @@ void NdkCameraWindow::set_window(ANativeWindow* _win)
     ANativeWindow_acquire(win);
 }
 
-void NdkCameraWindow::on_image_render(cv::Mat& rgb,unsigned char*origin) const
+void NdkCameraWindow::on_image_render(cv::Mat& rgb,unsigned char*origin,int width, int height) const
 {
 }
 
@@ -719,7 +719,7 @@ void NdkCameraWindow::on_image(const unsigned char* nv21, int nv21_width, int nv
     cv::Mat rgb(roi_h, roi_w, CV_8UC3);
     ncnn::yuv420sp2rgb(nv21_croprotated.data, roi_w, roi_h, rgb.data);
 
-    on_image_render(rgb,nv21_croprotated.data);
+    on_image_render(rgb,nv21_croprotated.data,roi_w,roi_h);
 
     // rotate to native window orientation
     cv::Mat rgb_render(render_h, render_w, CV_8UC3);
