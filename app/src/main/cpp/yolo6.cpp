@@ -160,15 +160,7 @@ jobject mattobitmap(JNIEnv *env, cv::Mat mat) {
     return bitmap;
 }
 
-static Yolo *g_yolo = 0;
-static ncnn::Mutex lock;
-
-class MyNdkCamera : public NdkCameraWindow {
-public:
-    virtual void on_image_render(cv::Mat &rgb) const;
-};
-
-void MyNdkCamera::on_image_render(cv::Mat &rgb) const {
+void bitmapCallBack(cv::Mat &rgb){
     JNIEnv *env;
     if (g_vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) {
         // 当前线程不附加到JavaVM，需要附加它
@@ -190,7 +182,19 @@ void MyNdkCamera::on_image_render(cv::Mat &rgb) const {
 
     // 完成后，如果线程不是由JavaVM附加的，需要分离它
     g_vm->DetachCurrentThread();
+}
+
+static Yolo *g_yolo = 0;
+static ncnn::Mutex lock;
+
+class MyNdkCamera : public NdkCameraWindow {
+public:
+    virtual void on_image_render(cv::Mat &rgb) const;
+};
+
+void MyNdkCamera::on_image_render(cv::Mat &rgb) const {
     // nanodet
+    bitmapCallBack(rgb);
     {
         ncnn::MutexLockGuard g(lock);
 
