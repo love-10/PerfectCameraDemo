@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".MainActivity">
+
+    <com.otaliastudios.cameraview.CameraView
+        android:id="@+id/cameraview"
+        android:layout_centerInParent="true"
+        app:cameraEngine="camera2"
+        app:cameraPictureFormat="jpeg"
+        app:cameraFacing="back"
+        app:cameraAudio="off"
+        app:cameraPreview="glSurface"
+        android:layout_width="1080px"
+        android:layout_height="1920px" />
+
+    <ImageView
+        android:id="@+id/img"
+        android:layout_centerInParent="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <com.example.perfectcamerademo.TrackView
+        android:id="@+id/track_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true" />
+</RelativeLayout>
