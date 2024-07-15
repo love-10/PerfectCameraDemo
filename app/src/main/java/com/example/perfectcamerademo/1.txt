@@ -1,0 +1,42 @@
+Java_com_example_perfectcamerademo_Yolo6_detect1(JNIEnv *env, jobject, jobject bitmap) {
+    AndroidBitmapInfo info;
+    void* pixels;
+
+    // 获取Bitmap信息
+    if (AndroidBitmap_getInfo(env, bitmap, &info) < 0) {
+        return;
+    }
+
+    if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
+        return;
+    }
+
+    // 锁定Bitmap像素
+    if (AndroidBitmap_lockPixels(env, bitmap, &pixels) < 0) {
+        return;
+    }
+
+    // 创建Mat对象
+    cv::Mat mat(info.height, info.width, CV_8UC4, pixels);
+
+    // 转换为灰度图像
+    cv::Mat grayMat;
+    cvtColor(mat, grayMat, cv::COLOR_RGBA2GRAY);
+
+    // 创建HOGDescriptor对象
+    cv::HOGDescriptor hog;
+    hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
+
+    // 检测人体
+    std::vector<cv::Rect> found;
+    hog.detectMultiScale(grayMat, found);
+
+    // 绘制检测结果
+    for (size_t i = 0; i < found.size(); i++) {
+        cv::Rect r = found[i];
+        rectangle(mat, r.tl(), r.br(), cv::Scalar(255, 0, 0, 255), 2);
+    }
+
+    // 解锁Bitmap像素
+    AndroidBitmap_unlockPixels(env, bitmap);
+}
