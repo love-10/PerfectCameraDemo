@@ -27,8 +27,10 @@ val initial_state = arrayOf(
 val IOU_Threshold = 0.3f  // 匹配时的阈值
 
 // 状态转移矩阵，上一时刻的状态转移到当前时刻
-val A = makeXMatrix(1)
-
+val A = makeXMatrix(1).apply {
+    intArrayOf(0)[4] = 1
+    intArrayOf(1)[5] = 1
+}
 
 //A = np.array([[1, 0, 0, 0, 1, 0],
 //[0, 1, 0, 0, 0, 1],
@@ -50,5 +52,18 @@ val R = makeXMatrix(1)
 
 // 控制输入矩阵B
 val B = null
+
 // 状态估计协方差矩阵P初始化
 val P = makeXMatrix(1)
+
+
+fun main() {
+    val frame_counter = 1
+    val X_posterior = initial_state.copyOf()
+    val P_posterior = P.copyOf()
+    val Z = initial_state.copyOf()
+    while (true){
+
+
+    }
+}
