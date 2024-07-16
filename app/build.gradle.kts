@@ -68,4 +68,5 @@ dependencies {
     implementation("com.otaliastudios:cameraview:2.7.2")
     implementation("io.github.afkt:DevAppX:2.4.6")
     implementation("com.google.code.gson:gson:2.11.0")
+    implementation("org.opencv:opencv:4.10.0")
 }

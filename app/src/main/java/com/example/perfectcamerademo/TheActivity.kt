@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Surface
 import androidx.appcompat.app.AppCompatActivity
+import com.example.perfectcamerademo.Kalman.reverse
 import com.example.perfectcamerademo.databinding.ActivityMainBinding
 import com.example.perfectcamerademo.databinding.TheActivityBinding
 import com.google.gson.Gson
@@ -57,7 +58,7 @@ class TheActivity : AppCompatActivity() {
         super.onPause()
     }
 
-    fun log(msg:Any?){
+    fun log(msg: Any?) {
         Log.d("xxxxx", Gson().toJson(msg))
     }
 }
