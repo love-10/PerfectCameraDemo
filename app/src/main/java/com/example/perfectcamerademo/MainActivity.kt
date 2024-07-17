@@ -8,6 +8,10 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.perfectcamerademo.databinding.ActivityMainBinding
 import com.google.gson.Gson
 import dev.utils.app.ScreenUtils
+import org.opencv.core.Core
+import org.opencv.core.CvType
+import org.opencv.core.Mat
+import org.opencv.core.Scalar
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,8 +24,8 @@ class MainActivity : AppCompatActivity() {
 //                    binding.img.setImageBitmap(bitmap)
                     binding.trackView.update(boxes.filter { it.label == 0 })
                 }
-                Log.d("xxxxx", "sizesize ${bitmap.width} * ${bitmap.height}")
-                Log.d("xxxxx", "box ${Gson().toJson(boxes)}")
+//                Log.d("xxxxx", "sizesize ${bitmap.width} * ${bitmap.height}")
+//                Log.d("xxxxx", "box ${Gson().toJson(boxes)}")
             }
         }
     }
@@ -30,6 +34,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        // 过程噪声协方差矩阵 Q
+        val Q = Mat.eye(6, 6, CvType.CV_64F).apply {
+            Core.multiply(this, Scalar(0.1), this)
+        }
+        Log.d("xxxxx", Gson().toJson(Q))
         binding.cameraview.onSurfaceChangedListener =
             object : SelfSurfaceView.OnSurfaceChangedListener {
                 override fun onSurfaceChange(surface: Surface) {
