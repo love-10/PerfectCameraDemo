@@ -1,9 +1,7 @@
 package com.example.perfectcamerademo.Kalman
 
 import org.example.SingleKalman.GRect
-import org.example.SingleKalman.T
 import org.example.SingleKalman.grect2orect
-import org.example.SingleKalman.makeXMatrix
 
 // 状态初始化
 val initial_target_box = GRect(729, 238, 764, 339)  // 目标初始bouding box
@@ -50,20 +48,19 @@ val Q = makeXMatrix(0.1f)
 // 观测噪声来自于检测框丢失、重叠等
 val R = makeXMatrix(1)
 
-// 控制输入矩阵B
-val B = null
-
 // 状态估计协方差矩阵P初始化
 val P = makeXMatrix(1)
 
+val X_posterior = initial_state.copyOf()
+val P_posterior = P.copyOf()
+val Z = initial_state.copyOf()
 
-fun main() {
-    val frame_counter = 1
-    val X_posterior = initial_state.copyOf()
-    val P_posterior = P.copyOf()
-    val Z = initial_state.copyOf()
-    while (true){
+fun run(boxes: MutableList<GRect>) {
 
+    val max_iou = IOU_Threshold
+    val max_iou_matched = false
+    var target_box: GRect? = null
+    boxes.forEach { box ->
 
     }
 }
