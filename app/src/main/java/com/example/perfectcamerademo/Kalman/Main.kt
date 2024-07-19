@@ -93,7 +93,7 @@ fun run(boxes: MutableList<GRect>) {
 
         // --------------后验估计------------
         val X_posterior_1 = Z.sub(H.dot(X_prior))
-        val X_posterior = X_prior.add(K.dot(X_posterior_1))
+        X_posterior = X_prior.add(K.dot(X_posterior_1))
         val box_posterior = X_posterior.array16ToORect().toGRect()
 
         val P_posterior_1 = makeXMatrix(1f).sub(K.dot(H))
