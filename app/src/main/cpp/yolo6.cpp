@@ -44,6 +44,7 @@ jclass bClz;
 jobject bObj;
 
 jclass sClz;
+static jboolean needDraw = false;
 
 static int draw_unsupported(cv::Mat &rgb) {
     const char text[] = "unsupported";
@@ -211,7 +212,8 @@ jobject NV21ToBitmap(JNIEnv *env, unsigned char *nv21, int width, int height) {
     return bitmap;
 }
 
-void bitmapCallBack(cv::Mat &rgb, std::vector<Object> objects, unsigned char *origin,int width, int height) {
+void bitmapCallBack(cv::Mat &rgb, std::vector<Object> objects, unsigned char *origin, int width,
+                    int height) {
     JNIEnv *env;
     if (g_vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) {
         // 当前线程不附加到JavaVM，需要附加它
@@ -261,10 +263,11 @@ static ncnn::Mutex lock;
 
 class MyNdkCamera : public NdkCameraWindow {
 public:
-    virtual void on_image_render(cv::Mat &rgb, unsigned char*origin, int width, int height) const;
+    virtual void on_image_render(cv::Mat &rgb, unsigned char *origin, int width, int height) const;
 };
 
-void MyNdkCamera::on_image_render(cv::Mat &rgb, unsigned char *origin,int width, int height) const {
+void
+MyNdkCamera::on_image_render(cv::Mat &rgb, unsigned char *origin, int width, int height) const {
     // nanodet
     std::vector<Object> objects;
     {
@@ -274,7 +277,10 @@ void MyNdkCamera::on_image_render(cv::Mat &rgb, unsigned char *origin,int width,
 
             g_yolo->detect(rgb, objects);
 
-            //g_yolo->draw(rgb, objects);
+            if (needDraw) {
+                g_yolo->draw(rgb, objects);
+            }
+
         } else {
             draw_unsupported(rgb);
         }
@@ -312,7 +318,8 @@ JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) {
 // public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
 extern "C" jboolean
 Java_com_example_perfectcamerademo_Yolo6_loadModel(JNIEnv *env, jobject thiz, jobject assetManager,
-                                                   jint modelid, jint cpugpu, jobject bCallBack) {
+                                                   jint modelid, jint cpugpu, jboolean isDraw,
+                                                   jobject bCallBack) {
     if (modelid < 0 || modelid > 4 || cpugpu < 0 || cpugpu > 1) {
         return JNI_FALSE;
     }
@@ -322,6 +329,7 @@ Java_com_example_perfectcamerademo_Yolo6_loadModel(JNIEnv *env, jobject thiz, jo
     bObj = (*env).NewGlobalRef(bCallBack);
     jclass stu_cls = env->FindClass("com/example/perfectcamerademo/Box");//获得Student类引用
     sClz = static_cast<jclass>((*env).NewGlobalRef(stu_cls));
+    needDraw = isDraw;
 
 
     AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);

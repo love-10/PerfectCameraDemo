@@ -20,7 +20,7 @@ class TheActivity : AppCompatActivity() {
     private lateinit var binding: TheActivityBinding
     private val yolo6 by lazy {
         Yolo6().apply {
-            loadModel(assets, 4, 0) { bitmap, boxes ->
+            loadModel(assets, 4, 0, false) { bitmap, boxes ->
 //                runOnUiThread {
 ////                    binding.img.setImageBitmap(bitmap)
 //                    binding.trackView.update(boxes.filter { it.label == 0 })

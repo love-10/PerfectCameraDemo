@@ -19,13 +19,14 @@ class MainActivity : AppCompatActivity() {
     private val yolo6 by lazy {
         Rect()
         Yolo6().apply {
-            loadModel(assets, 4, 0) { bitmap, boxes ->
+            loadModel(assets, 0, 0, true) { bitmap, boxes ->
                 runOnUiThread {
 //                    binding.img.setImageBitmap(bitmap)
-                    binding.trackView.update(boxes.filter { it.label == 0 })
-                }
+//                    binding.trackView.update(boxes.filter { it.label == 0 })
+//                }
 //                Log.d("xxxxx", "sizesize ${bitmap.width} * ${bitmap.height}")
 //                Log.d("xxxxx", "box ${Gson().toJson(boxes)}")
+                }
             }
         }
     }
@@ -34,11 +35,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        // 过程噪声协方差矩阵 Q
-        val Q = Mat.eye(6, 6, CvType.CV_64F).apply {
-            Core.multiply(this, Scalar(0.1), this)
-        }
-        Log.d("xxxxx", Gson().toJson(Q))
         binding.cameraview.onSurfaceChangedListener =
             object : SelfSurfaceView.OnSurfaceChangedListener {
                 override fun onSurfaceChange(surface: Surface) {
