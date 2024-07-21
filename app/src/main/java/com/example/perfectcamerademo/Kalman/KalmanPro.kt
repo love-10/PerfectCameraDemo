@@ -2,8 +2,10 @@ package com.example.perfectcamerademo.Kalman
 
 import org.example.SingleKalman.log
 import org.example.SingleKalman.printMat
+import org.opencv.core.Core.add
 import org.opencv.core.Core.gemm
 import org.opencv.core.Core.multiply
+import org.opencv.core.Core.subtract
 import org.opencv.core.CvType.CV_64F
 import org.opencv.core.Mat
 import org.opencv.core.Scalar
@@ -56,12 +58,11 @@ object KalmanPro {
 
         for (z in measurements) {
             // 预测步骤
-            val xPred = Mat()
-            gemm(F, x, 1.0, Mat(), 0.0, xPred)
+            gemm(F, x, 1.0, Mat(), 0.0, x)
 
             val PPred = Mat()
             gemm(F, P, 1.0, Mat(), 0.0, PPred)
-            gemm(PPred, F.t(), 1.0, Q, 1.0, PPred)
+            gemm(PPred, F.t(), 1.0, Q, 0.0, P)
 
             // 更新步骤
             val zMat = Mat(2, 1, CV_64F).apply {
@@ -69,21 +70,28 @@ object KalmanPro {
                 put(1, 0, z[1])
             }
             val y = Mat()
-            gemm(H, xPred, -1.0, zMat, 1.0, y)
+            gemm(H, x, 1.0, Mat(), 0.0, y)
+            subtract(zMat, y, y)
 
             val S = Mat()
-            gemm(H, PPred, 1.0, Mat(), 0.0, S)
-            gemm(S, H.t(), 1.0, R, 1.0, S)
+            gemm(P, H.t(), 1.0, Mat(), 0.0, S)
+            gemm(H, S, 1.0, Mat(), 0.0, S)
+            add(S, R, S)
 
             val K = Mat()
-            S.inv()
-            gemm(PPred, H.t(), 1.0, Mat(), 0.0, K)
-            gemm(K, S, 1.0, Mat(), 0.0, K)
 
-            gemm(K, y, 1.0, xPred, 1.0, x)
-            gemm(K, H, 1.0, Mat.eye(4, 4, CV_64F), -1.0, K)
-            gemm(K, PPred, 1.0, Mat(), 0.0, P)
+            gemm(P, H.t(), 1.0, Mat(), 0.0, K)
+            gemm(K, S.inv(), 1.0, Mat(), 0.0, K)
 
+            val xTemp = Mat()
+            gemm(K, y, 1.0, Mat(), 0.0, xTemp)
+            add(xTemp, x, x)
+
+            val pTemp = Mat()
+            gemm(K, H, 1.0, Mat(), 0.0, pTemp)
+            gemm(pTemp, P, 1.0, Mat(), 0.0, pTemp)
+
+            subtract(P, pTemp, P)
             log("跟新状态:")
             x.printMat()
         }
