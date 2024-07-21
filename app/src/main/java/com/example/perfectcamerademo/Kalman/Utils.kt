@@ -1,7 +1,10 @@
 package org.example.SingleKalman
 
 import android.graphics.Rect
+import android.util.Log
 import com.example.perfectcamerademo.Kalman.toIntArray
+import com.google.gson.Gson
+import org.opencv.core.Mat
 
 typealias GRect = Rect
 typealias ORect = org.opencv.core.Rect
@@ -27,5 +30,28 @@ fun Array<IntArray>.array16ToORect(): ORect {
         get(2)[0],
         get(3)[0]
     )
+}
+
+fun log(msg: Any?) {
+    Log.d("xxxxx", Gson().toJson(msg))
+}
+
+fun Any?.toJson(): String {
+    return Gson().toJson(this)
+}
+
+fun Mat.printMat() {
+    val rows = rows()
+    val cols = cols()
+    for (i in 0 until rows) {
+        val sb = StringBuilder()
+        for (j in 0 until cols) {
+            sb.append(get(i, j)[0])
+            if (j != cols - 1) {
+                sb.append(" ")
+            }
+        }
+        log(sb.toString())
+    }
 }
 

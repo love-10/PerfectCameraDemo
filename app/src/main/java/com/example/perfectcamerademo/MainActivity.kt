@@ -5,9 +5,11 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Surface
 import androidx.appcompat.app.AppCompatActivity
+import com.example.perfectcamerademo.Kalman.KalmanPro
 import com.example.perfectcamerademo.databinding.ActivityMainBinding
 import com.google.gson.Gson
 import dev.utils.app.ScreenUtils
+import org.opencv.android.OpenCVLoader
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
@@ -22,7 +24,7 @@ class MainActivity : AppCompatActivity() {
             loadModel(assets, 0, 0, true) { bitmap, boxes ->
                 runOnUiThread {
 //                    binding.img.setImageBitmap(bitmap)
-//                    binding.trackView.update(boxes.filter { it.label == 0 })
+                    binding.trackView.update(boxes.filter { it.label == 0 })
 //                }
 //                Log.d("xxxxx", "sizesize ${bitmap.width} * ${bitmap.height}")
 //                Log.d("xxxxx", "box ${Gson().toJson(boxes)}")
@@ -35,6 +37,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        OpenCVLoader.initLocal()
         binding.cameraview.onSurfaceChangedListener =
             object : SelfSurfaceView.OnSurfaceChangedListener {
                 override fun onSurfaceChange(surface: Surface) {
@@ -45,6 +48,7 @@ class MainActivity : AppCompatActivity() {
         params.width = ScreenUtils.getScreenWidth()
         params.height = ScreenUtils.getScreenWidth() * 16 / 9
         binding.trackView.layoutParams = params
+        KalmanPro.run()
     }
 
     public override fun onResume() {
