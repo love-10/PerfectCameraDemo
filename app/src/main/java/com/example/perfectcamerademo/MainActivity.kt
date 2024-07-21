@@ -1,5 +1,6 @@
 package com.example.perfectcamerademo
 
+import android.graphics.BitmapFactory
 import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
@@ -9,6 +10,8 @@ import com.example.perfectcamerademo.Kalman.KalmanPro
 import com.example.perfectcamerademo.databinding.ActivityMainBinding
 import com.google.gson.Gson
 import dev.utils.app.ScreenUtils
+import dev.utils.app.image.BitmapUtils
+import org.example.SingleKalman.log
 import org.opencv.android.OpenCVLoader
 import org.opencv.core.Core
 import org.opencv.core.CvType
@@ -48,7 +51,17 @@ class MainActivity : AppCompatActivity() {
         params.width = ScreenUtils.getScreenWidth()
         params.height = ScreenUtils.getScreenWidth() * 16 / 9
         binding.trackView.layoutParams = params
-        KalmanPro.run()
+        val bitmap = BitmapFactory.decodeResource(resources, R.drawable.e)
+        val time = System.currentTimeMillis()
+        val result = yolo6.detect(bitmap)
+        log("time ${System.currentTimeMillis() - time}")
+        val newList = result.map {
+            FrameInfo().apply {
+                addBox(it.x, it.y, it.width, it.height, it.label, it.prop)
+            }
+        }
+        log(result)
+        binding.img.setImageBitmap(DrawImage.drawResult(BitmapUtils.copy(bitmap), newList.toTypedArray(), null))
     }
 
     public override fun onResume() {

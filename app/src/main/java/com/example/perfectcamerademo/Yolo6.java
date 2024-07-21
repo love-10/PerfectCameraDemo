@@ -15,7 +15,11 @@
 package com.example.perfectcamerademo;
 
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.view.Surface;
+
+import java.util.ArrayList;
+import java.util.BitSet;
 
 public class Yolo6
 {
@@ -23,8 +27,9 @@ public class Yolo6
     public native boolean openCamera(int facing, int cameraId);
     public native boolean closeCamera();
     public native boolean setOutputWindow(Surface surface);
+    public native ArrayList<Box> detect(Bitmap bitmap);
 
     static {
-        System.loadLibrary("yolo6");
+        System.loadLibrary("detect");
     }
 }

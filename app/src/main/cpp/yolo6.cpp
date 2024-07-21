@@ -163,6 +163,26 @@ jobject mattobitmap(JNIEnv *env, cv::Mat mat) {
     return bitmap;
 }
 
+cv::Mat bitmapToMat(JNIEnv *env, jobject bitmap) {
+    AndroidBitmapInfo info;
+    void *pixels = nullptr;
+
+    // 获取 bitmap 信息
+    AndroidBitmap_getInfo(env, bitmap, &info);
+
+    AndroidBitmap_lockPixels(env, bitmap, &pixels);
+
+    cv::Mat mat(info.height, info.width, CV_8UC4, pixels);
+    cv::Mat result;
+    cvtColor(mat, result, cv::COLOR_BGRA2BGR);
+
+    // 解锁 bitmap
+    AndroidBitmap_unlockPixels(env, bitmap);
+
+    // 返回 Mat 的指针
+    return result;
+}
+
 jobject NV21ToBitmap(JNIEnv *env, unsigned char *nv21, int width, int height) {
 // 创建Mat对象用于存储NV21数据
     cv::Mat nv21Mat(height + height / 2, width, CV_8UC1, (unsigned char *) nv21);
@@ -394,6 +414,38 @@ Java_com_example_perfectcamerademo_Yolo6_loadModel(JNIEnv *env, jobject thiz, jo
 
     return JNI_TRUE;
 }
+
+// public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
+extern "C" jobject
+Java_com_example_perfectcamerademo_Yolo6_detect(JNIEnv *env, jobject thiz, jobject bitmap) {
+
+
+    std::vector<Object> objects;
+    jclass list_cls = env->FindClass("java/util/ArrayList");//获得ArrayList类引用
+    g_yolo->detect(bitmapToMat(env, bitmap), objects);
+
+    jmethodID list_costruct = env->GetMethodID(list_cls, "<init>", "()V"); //获得得构造函数Id
+
+    jobject list_obj = env->NewObject(list_cls, list_costruct); //创建一个Arraylist集合对象
+    //或得Arraylist类中的 add()方法ID，其方法原型为： boolean add(Object object) ;
+    jmethodID list_add = env->GetMethodID(list_cls, "add", "(Ljava/lang/Object;)Z");
+
+    //获得该类型的构造函数  函数名为 <init> 返回类型必须为 void 即 V
+    jmethodID stu_costruct = env->GetMethodID(sClz, "<init>", "(FFFFFI)V");
+
+    for (int i = 0; i < objects.size(); i++) {
+        const Object &obj = objects[i];
+        //通过调用该对象的构造函数来new 一个 Student实例
+        jobject stu_obj = env->NewObject(sClz, stu_costruct, obj.rect.x, obj.rect.y,
+                                         obj.rect.width, obj.rect.height, obj.prob,
+                                         obj.label);  //构造一个对象
+
+        env->CallBooleanMethod(list_obj, list_add, stu_obj); //执行Arraylist类实例的add方法，添加一个stu对象
+    }
+
+    return list_obj;
+}
+
 
 // public native boolean openCamera(int facing);
 extern "C" jboolean
