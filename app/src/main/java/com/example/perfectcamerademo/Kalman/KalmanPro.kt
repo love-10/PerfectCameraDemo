@@ -1,9 +1,5 @@
 package com.example.perfectcamerademo.Kalman
 
-import android.graphics.Point
-import android.graphics.PointF
-import org.example.SingleKalman.log
-import org.example.SingleKalman.printMat
 import org.opencv.core.Core.add
 import org.opencv.core.Core.gemm
 import org.opencv.core.Core.multiply
@@ -11,9 +7,6 @@ import org.opencv.core.Core.subtract
 import org.opencv.core.CvType.CV_64F
 import org.opencv.core.Mat
 import org.opencv.core.Scalar
-import kotlin.math.abs
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 object KalmanPro {
     // 初始状态 [x, y, vx, vy]
@@ -59,26 +52,8 @@ object KalmanPro {
         listOf(5.0, 6.0)
     )
 
-    private val ms = listOf(
-        PointF(1.0f, 2.0f),
-        PointF(2.0f, 3.0f),
-        PointF(3.0f, 4.0f),
-        PointF(4.0f, 5.0f),
-        PointF(5.0f, 6.0f),
-        PointF(7.0f, 6.0f),
-    )
-
     fun run() {
-//        log(removeOutliers(ms))
-        // 插入点并检测偏移点
-        addPoint(1.0, 2.0)
-        addPoint(2.0, 3.0)
-        addPoint(3.0, 4.0)
-        addPoint(100.0, 200.0) // 这个点应该被认为是偏移点
-        addPoint(4.0, 5.0)
-
-        // 打印剩余的有效点
-        log(points)
+        AvgUtils.run()
         for (z in measurements) {
             // 预测步骤
             gemm(F, x, 1.0, Mat(), 0.0, x)
@@ -119,57 +94,4 @@ object KalmanPro {
 //            x.printMat()
         }
     }
-
-    private fun removeOutliers(coordinates: List<PointF>): List<PointF> {
-        // 计算均值
-        val meanX = coordinates.map { it.x }.average()
-        val meanY = coordinates.map { it.y }.average()
-
-        // 计算标准差
-        val stdDevX = sqrt(coordinates.map { (it.x - meanX).pow(2) }.average())
-        val stdDevY = sqrt(coordinates.map { (it.y - meanY).pow(2) }.average())
-
-        // 设定一个阈值，通常为2或3个标准差范围内的数据为正常数据
-        val threshold = 1
-
-        return coordinates.filter {
-            val isWithinX = abs(it.x - meanX) <= threshold * stdDevX
-            val isWithinY = abs(it.y - meanY) <= threshold * stdDevY
-            isWithinX && isWithinY
-        }
-    }
-
-    private val points = mutableListOf<Pair<Double, Double>>()
-    private val threshold = 5.0 // 设定一个距离阈值
-
-    private fun addPoint(x: Double, y: Double) {
-        val newPoint = Pair(x, y)
-        if (points.isNotEmpty()) {
-            val avgPoint = calculateAveragePoint()
-            val distance = calculateEuclideanDistance(avgPoint, newPoint)
-            if (distance > threshold) {
-                log("Outlier Point ($x, $y) is an outlier and will be removed.")
-                return
-            }
-        }
-        points.add(newPoint)
-    }
-
-    private fun calculateAveragePoint(): Pair<Double, Double> {
-        var sumX = 0.0
-        var sumY = 0.0
-        for (point in points) {
-            sumX += point.first
-            sumY += point.second
-        }
-        return Pair(sumX / points.size, sumY / points.size)
-    }
-
-    private fun calculateEuclideanDistance(
-        p1: Pair<Double, Double>,
-        p2: Pair<Double, Double>
-    ): Double {
-        return sqrt((p1.first - p2.first) * (p1.first - p2.first) + (p1.second - p2.second) * (p1.second - p2.second))
-    }
-
 }
