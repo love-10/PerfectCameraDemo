@@ -24,10 +24,10 @@ class MainActivity : AppCompatActivity() {
     private val yolo6 by lazy {
         Rect()
         Yolo6().apply {
-            loadModel(assets, 0, 0, true) { bitmap, boxes ->
+            loadModel(assets, 0, 0, false) { bitmap, boxes ->
                 runOnUiThread {
 //                    binding.img.setImageBitmap(bitmap)
-                    binding.trackView.update(boxes.filter { it.label == 0 })
+//                    binding.trackView.update(boxes.filter { it.label == 0 })
 //                }
 //                Log.d("xxxxx", "sizesize ${bitmap.width} * ${bitmap.height}")
 //                Log.d("xxxxx", "box ${Gson().toJson(boxes)}")
@@ -51,9 +51,10 @@ class MainActivity : AppCompatActivity() {
         params.width = ScreenUtils.getScreenWidth()
         params.height = ScreenUtils.getScreenWidth() * 16 / 9
         binding.trackView.layoutParams = params
+        OpenCvDetector.init(this)
         val bitmap = BitmapFactory.decodeResource(resources, R.drawable.e)
         val time = System.currentTimeMillis()
-        val result = yolo6.detect(bitmap)
+        val result = OpenCvDetector.run(bitmap)
         log("time ${System.currentTimeMillis() - time}")
         val newList = result.map {
             FrameInfo().apply {
