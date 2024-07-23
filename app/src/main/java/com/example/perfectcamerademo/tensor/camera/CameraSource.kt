@@ -36,10 +36,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import com.example.perfectcamerademo.tensor.VisualizationUtils
 import com.example.perfectcamerademo.tensor.YuvToRgbConverter
 import com.example.perfectcamerademo.tensor.data.Person
-import com.example.perfectcamerademo.tensor.ml.MoveNetMultiPose
 import com.example.perfectcamerademo.tensor.ml.PoseClassifier
 import com.example.perfectcamerademo.tensor.ml.PoseDetector
-import com.example.perfectcamerademo.tensor.ml.TrackerType
 import org.example.SingleKalman.log
 import java.util.*
 import kotlin.coroutines.resume
@@ -62,7 +60,6 @@ class CameraSource(
     private val lock = Any()
     private var detector: PoseDetector? = null
     private var classifier: PoseClassifier? = null
-    private var isTrackerEnabled = false
     private var yuvConverter: YuvToRgbConverter = YuvToRgbConverter(surfaceView.context)
     private lateinit var imageBitmap: Bitmap
 
@@ -174,7 +171,7 @@ class CameraSource(
             ) {
                 continue
             }
-            this.cameraId = "1"
+            this.cameraId = "0"
         }
     }
 
@@ -198,13 +195,6 @@ class CameraSource(
         }
     }
 
-    /**
-     * Set Tracker for Movenet MuiltiPose model.
-     */
-    fun setTracker(trackerType: TrackerType) {
-        isTrackerEnabled = trackerType != TrackerType.OFF
-        (this.detector as? MoveNetMultiPose)?.setTracker(trackerType)
-    }
 
     fun resume() {
         imageReaderThread = HandlerThread("imageReaderThread").apply { start() }
@@ -276,7 +266,7 @@ class CameraSource(
 
         val outputBitmap = VisualizationUtils.drawBodyKeypoints(
             bitmap,
-            persons.filter { it.score > MIN_CONFIDENCE }, isTrackerEnabled
+            persons.filter { it.score > MIN_CONFIDENCE }
         )
 
         val holder = surfaceView.holder

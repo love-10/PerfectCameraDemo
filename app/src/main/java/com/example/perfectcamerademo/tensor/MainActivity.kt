@@ -39,11 +39,8 @@ import com.example.perfectcamerademo.tensor.camera.CameraSource
 import com.example.perfectcamerademo.tensor.data.Device
 import com.example.perfectcamerademo.tensor.ml.ModelType
 import com.example.perfectcamerademo.tensor.ml.MoveNet
-import com.example.perfectcamerademo.tensor.ml.MoveNetMultiPose
 import com.example.perfectcamerademo.tensor.ml.PoseClassifier
 import com.example.perfectcamerademo.tensor.ml.PoseNet
-import com.example.perfectcamerademo.tensor.ml.TrackerType
-import com.example.perfectcamerademo.tensor.ml.Type
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -122,7 +119,7 @@ class MainActivity : AppCompatActivity() {
 
     private var changeTrackerListener = object : AdapterView.OnItemSelectedListener {
         override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-            changeTracker(position)
+
         }
 
         override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -293,17 +290,6 @@ class MainActivity : AppCompatActivity() {
         createPoseEstimator()
     }
 
-    // Change tracker for Movenet MultiPose model
-    private fun changeTracker(position: Int) {
-        cameraSource?.setTracker(
-            when (position) {
-                1 -> TrackerType.BOUNDING_BOX
-                2 -> TrackerType.KEYPOINTS
-                else -> TrackerType.OFF
-            }
-        )
-    }
-
     private fun createPoseEstimator() {
         // For MoveNet MultiPose, hide score and disable pose classifier as the model returns
         // multiple Person instances.
@@ -321,21 +307,6 @@ class MainActivity : AppCompatActivity() {
                 showDetectionScore(true)
                 showTracker(false)
                 MoveNet.create(this, device, ModelType.Thunder)
-            }
-            2 -> {
-                // MoveNet (Lightning) MultiPose
-                showPoseClassifier(false)
-                showDetectionScore(false)
-                // Movenet MultiPose Dynamic does not support GPUDelegate
-                if (device == Device.GPU) {
-                    showToast(getString(R.string.tfe_pe_gpu_error))
-                }
-                showTracker(true)
-                MoveNetMultiPose.create(
-                    this,
-                    device,
-                    Type.Dynamic
-                )
             }
             3 -> {
                 // PoseNet (SinglePose)
