@@ -1,0 +1,128 @@
+import android.content.Context
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
+
+val cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+val cameraIds = cameraManager.cameraIdList
+
+for (id in cameraIds) {
+    val characteristics = cameraManager.getCameraCharacteristics(id)
+    val capabilities = characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
+    val isLogicalMultiCamera = characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA) != null
+    
+    if (isLogicalMultiCamera) {
+        // 该摄像头设备支持逻辑多摄像头
+    }
+}
+
+
+
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraManager
+import android.os.Handler
+import android.os.HandlerThread
+
+private lateinit var frontCamera: CameraDevice
+private lateinit var backCamera: CameraDevice
+
+val cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+val backgroundThread = HandlerThread("CameraBackground").apply { start() }
+val backgroundHandler = Handler(backgroundThread.looper)
+
+cameraManager.openCamera(frontCameraId, frontCameraStateCallback, backgroundHandler)
+cameraManager.openCamera(backCameraId, backCameraStateCallback, backgroundHandler)
+
+private val frontCameraStateCallback = object : CameraDevice.StateCallback() {
+    override fun onOpened(camera: CameraDevice) {
+        frontCamera = camera
+        createFrontCameraSession()
+    }
+
+    override fun onDisconnected(camera: CameraDevice) {
+        camera.close()
+        frontCamera = null
+    }
+
+    override fun onError(camera: CameraDevice, error: Int) {
+        camera.close()
+        frontCamera = null
+    }
+}
+
+private val backCameraStateCallback = object : CameraDevice.StateCallback() {
+    override fun onOpened(camera: CameraDevice) {
+        backCamera = camera
+        createBackCameraSession()
+    }
+
+    override fun onDisconnected(camera: CameraDevice) {
+        camera.close()
+        backCamera = null
+    }
+
+    override fun onError(camera: CameraDevice, error: Int) {
+        camera.close()
+        backCamera = null
+    }
+}
+
+
+import android.hardware.camera2.CameraCaptureSession
+import android.hardware.camera2.CaptureRequest
+import android.view.Surface
+
+private lateinit var frontCaptureSession: CameraCaptureSession
+private lateinit var backCaptureSession: CameraCaptureSession
+
+private fun createFrontCameraSession() {
+    val frontSurface: Surface = // 获取前置摄像头的输出 Surface
+    val frontCaptureRequestBuilder = frontCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+        addTarget(frontSurface)
+    }
+
+    frontCamera.createCaptureSession(listOf(frontSurface), object : CameraCaptureSession.StateCallback() {
+        override fun onConfigured(session: CameraCaptureSession) {
+            frontCaptureSession = session
+            frontCaptureSession.setRepeatingRequest(frontCaptureRequestBuilder.build(), null, backgroundHandler)
+        }
+
+        override fun onConfigureFailed(session: CameraCaptureSession) {
+            // 处理配置失败的情况
+        }
+    }, backgroundHandler)
+}
+
+private fun createBackCameraSession() {
+    val backSurface: Surface = // 获取后置摄像头的输出 Surface
+    val backCaptureRequestBuilder = backCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+        addTarget(backSurface)
+    }
+
+    backCamera.createCaptureSession(listOf(backSurface), object : CameraCaptureSession.StateCallback() {
+        override fun onConfigured(session: CameraCaptureSession) {
+            backCaptureSession = session
+            backCaptureSession.setRepeatingRequest(backCaptureRequestBuilder.build(), null, backgroundHandler)
+        }
+
+        override fun onConfigureFailed(session: CameraCaptureSession) {
+            // 处理配置失败的情况
+        }
+    }, 
+
+private fun startFrontCameraCapture() {
+    val frontCaptureRequestBuilder = frontCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+        addTarget(frontSurface)
+    }
+    frontCaptureSession.setRepeatingRequest(frontCaptureRequestBuilder.build(), null, backgroundHandler)
+}
+
+private fun startBackCameraCapture() {
+    val backCaptureRequestBuilder = backCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+        addTarget(backSurface)
+    }
+    backCaptureSession.setRepeatingRequest(backCaptureRequestBuilder.build(), null, backgroundHandler)
+}
+
+
+
+
