@@ -20,8 +20,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import com.example.perfectcamerademo.tensor.data.BodyPart
-import com.example.perfectcamerademo.tensor.data.Person
+import com.example.perfectcamerademo.posedetect.data.BodyPart
+import com.example.perfectcamerademo.posedetect.data.Person
 import kotlin.math.max
 
 object VisualizationUtils {

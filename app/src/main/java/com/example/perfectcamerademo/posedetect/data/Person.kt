@@ -14,11 +14,14 @@ limitations under the License.
 ==============================================================================
 */
 
-package com.example.perfectcamerademo.tensor.data
+package com.example.perfectcamerademo.posedetect.data
 
-data class TorsoAndBodyDistance(
-    val maxTorsoYDistance: Float,
-    val maxTorsoXDistance: Float,
-    val maxBodyYDistance: Float,
-    val maxBodyXDistance: Float
+import android.graphics.RectF
+import com.example.perfectcamerademo.posedetect.data.KeyPoint
+
+data class Person(
+    var id: Int = -1, // default id is -1
+    val keyPoints: List<KeyPoint>,
+    val boundingBox: RectF? = null, // Only MoveNet MultiPose return bounding box.
+    val score: Float
 )

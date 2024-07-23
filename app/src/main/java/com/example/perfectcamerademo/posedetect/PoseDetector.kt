@@ -14,9 +14,14 @@ limitations under the License.
 ==============================================================================
 */
 
-package com.example.perfectcamerademo.tensor.data
+package com.example.perfectcamerademo.posedetect
 
-import android.graphics.PointF
-import com.example.perfectcamerademo.tensor.data.BodyPart
+import android.graphics.Bitmap
+import com.example.perfectcamerademo.posedetect.data.Person
 
-data class KeyPoint(val bodyPart: BodyPart, var coordinate: PointF, val score: Float)
+interface PoseDetector : AutoCloseable {
+
+    fun estimatePoses(bitmap: Bitmap): List<Person>
+
+    fun lastInferenceTimeNanos(): Long
+}

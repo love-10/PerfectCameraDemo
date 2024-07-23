@@ -36,11 +36,11 @@ import com.example.perfectcamerademo.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.example.perfectcamerademo.tensor.camera.CameraSource
-import com.example.perfectcamerademo.tensor.data.Device
-import com.example.perfectcamerademo.tensor.ml.ModelType
-import com.example.perfectcamerademo.tensor.ml.MoveNet
+import com.example.perfectcamerademo.posedetect.data.Device
+import com.example.perfectcamerademo.posedetect.ModelType
+import com.example.perfectcamerademo.posedetect.MoveNet
 import com.example.perfectcamerademo.tensor.ml.PoseClassifier
-import com.example.perfectcamerademo.tensor.ml.PoseNet
+import com.example.perfectcamerademo.posedetect.PoseNet
 
 class MainActivity : AppCompatActivity() {
     companion object {

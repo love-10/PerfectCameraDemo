@@ -14,11 +14,11 @@ limitations under the License.
 ==============================================================================
 */
 
-package com.example.perfectcamerademo.tensor.tracker
+package com.example.perfectcamerademo.posedetect.data
 
-import com.example.perfectcamerademo.tensor.data.Person
-
-data class Track(
-    val person: Person,
-    val lastTimestamp: Long
+data class TorsoAndBodyDistance(
+    val maxTorsoYDistance: Float,
+    val maxTorsoXDistance: Float,
+    val maxBodyYDistance: Float,
+    val maxBodyXDistance: Float
 )

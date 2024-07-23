@@ -14,7 +14,7 @@ limitations under the License.
 ==============================================================================
 */
 
-package com.example.perfectcamerademo.tensor.ml
+package com.example.perfectcamerademo.posedetect
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -23,10 +23,10 @@ import android.os.SystemClock
 import android.util.Log
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
-import com.example.perfectcamerademo.tensor.data.BodyPart
-import com.example.perfectcamerademo.tensor.data.Device
-import com.example.perfectcamerademo.tensor.data.KeyPoint
-import com.example.perfectcamerademo.tensor.data.Person
+import com.example.perfectcamerademo.posedetect.data.BodyPart
+import com.example.perfectcamerademo.posedetect.data.Device
+import com.example.perfectcamerademo.posedetect.data.KeyPoint
+import com.example.perfectcamerademo.posedetect.data.Person
 import org.tensorflow.lite.gpu.GpuDelegate
 import org.tensorflow.lite.support.common.FileUtil
 import org.tensorflow.lite.support.common.ops.NormalizeOp

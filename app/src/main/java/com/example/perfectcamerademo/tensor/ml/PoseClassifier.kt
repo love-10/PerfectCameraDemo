@@ -18,7 +18,7 @@ package com.example.perfectcamerademo.tensor.ml
 
 import android.content.Context
 import org.tensorflow.lite.Interpreter
-import com.example.perfectcamerademo.tensor.data.Person
+import com.example.perfectcamerademo.posedetect.data.Person
 import org.tensorflow.lite.support.common.FileUtil
 
 class PoseClassifier(

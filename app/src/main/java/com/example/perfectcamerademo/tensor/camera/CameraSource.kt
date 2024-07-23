@@ -35,9 +35,9 @@ import android.view.SurfaceView
 import kotlinx.coroutines.suspendCancellableCoroutine
 import com.example.perfectcamerademo.tensor.VisualizationUtils
 import com.example.perfectcamerademo.tensor.YuvToRgbConverter
-import com.example.perfectcamerademo.tensor.data.Person
+import com.example.perfectcamerademo.posedetect.data.Person
 import com.example.perfectcamerademo.tensor.ml.PoseClassifier
-import com.example.perfectcamerademo.tensor.ml.PoseDetector
+import com.example.perfectcamerademo.posedetect.PoseDetector
 import org.example.SingleKalman.log
 import java.util.*
 import kotlin.coroutines.resume

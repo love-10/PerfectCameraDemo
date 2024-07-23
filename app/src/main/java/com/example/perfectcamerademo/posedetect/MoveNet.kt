@@ -14,16 +14,16 @@ limitations under the License.
 ==============================================================================
 */
 
-package com.example.perfectcamerademo.tensor.ml
+package com.example.perfectcamerademo.posedetect
 
 import android.content.Context
 import android.graphics.*
 import android.os.SystemClock
-import com.example.perfectcamerademo.tensor.data.BodyPart
-import com.example.perfectcamerademo.tensor.data.Device
-import com.example.perfectcamerademo.tensor.data.KeyPoint
-import com.example.perfectcamerademo.tensor.data.Person
-import com.example.perfectcamerademo.tensor.data.TorsoAndBodyDistance
+import com.example.perfectcamerademo.posedetect.data.BodyPart
+import com.example.perfectcamerademo.posedetect.data.Device
+import com.example.perfectcamerademo.posedetect.data.KeyPoint
+import com.example.perfectcamerademo.posedetect.data.Person
+import com.example.perfectcamerademo.posedetect.data.TorsoAndBodyDistance
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.GpuDelegate
@@ -39,7 +39,8 @@ import kotlin.math.min
 
 enum class ModelType {
     Lightning,
-    Thunder
+    Thunder,
+    PoseNet
 }
 
 class MoveNet(private val interpreter: Interpreter, private var gpuDelegate: GpuDelegate?) :

@@ -14,7 +14,7 @@ limitations under the License.
 ==============================================================================
 */
 
-package com.example.perfectcamerademo.tensor.data
+package com.example.perfectcamerademo.posedetect.data
 
 enum class BodyPart(val position: Int) {
     NOSE(0),
