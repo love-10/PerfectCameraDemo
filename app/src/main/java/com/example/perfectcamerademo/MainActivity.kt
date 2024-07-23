@@ -27,7 +27,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private val yolo6 by lazy {
-        Rect()
         Yolo6().apply {
             loadModel(assets, 0, 0, false) { bitmap, boxes ->
                 runOnUiThread {

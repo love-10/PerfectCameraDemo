@@ -36,8 +36,8 @@ object MoveNetOvO {
     private var moveNet: PoseDetector? = null
     fun init(context: Context) {
         moveNet = MoveNet.create(context, Device.GPU, ModelType.Lightning)
-        moveNet = MoveNet.create(context, Device.GPU, ModelType.Thunder)
-        moveNet = PoseNet.create(context, Device.GPU)
+//        moveNet = MoveNet.create(context, Device.GPU, ModelType.Thunder)
+//        moveNet = PoseNet.create(context, Device.GPU)
     }
 
     fun run(bitmap: Bitmap): MutableList<Person> {
