@@ -9,7 +9,6 @@ import android.graphics.PointF
 import com.example.perfectcamerademo.posedetect.data.BodyPart
 import com.example.perfectcamerademo.posedetect.data.Device
 import com.example.perfectcamerademo.posedetect.data.Person
-import com.example.perfectcamerademo.tensor.VisualizationUtils
 
 object MoveNetOvO {
     private val bodyPoints = arrayOf(BodyPart.NOSE, BodyPart.LEFT_EYE, BodyPart.RIGHT_EYE)
@@ -57,7 +56,7 @@ object MoveNetOvO {
 
     fun drawPoints(input: Bitmap, points: MutableList<PointF>): Bitmap {
         val paintCircle = Paint().apply {
-            strokeWidth = VisualizationUtils.CIRCLE_RADIUS
+            strokeWidth = 20f
             color = Color.RED
             style = Paint.Style.FILL
         }
@@ -68,7 +67,7 @@ object MoveNetOvO {
             originalSizeCanvas.drawCircle(
                 it.x,
                 it.y,
-                VisualizationUtils.CIRCLE_RADIUS,
+                20f,
                 paintCircle
             )
         }

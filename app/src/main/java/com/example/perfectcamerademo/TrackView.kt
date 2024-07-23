@@ -9,9 +9,7 @@ import android.graphics.PointF
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
-import com.example.perfectcamerademo.posedetect.MoveNet
 import com.example.perfectcamerademo.posedetect.MoveNetOvO
-import com.example.perfectcamerademo.tensor.VisualizationUtils
 
 class TrackView(context: Context, attributeSet: AttributeSet) : View(context, attributeSet) {
 
