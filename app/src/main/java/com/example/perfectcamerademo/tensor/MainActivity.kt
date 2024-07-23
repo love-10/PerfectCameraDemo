@@ -39,6 +39,7 @@ import com.example.perfectcamerademo.tensor.camera.CameraSource
 import com.example.perfectcamerademo.posedetect.data.Device
 import com.example.perfectcamerademo.posedetect.ModelType
 import com.example.perfectcamerademo.posedetect.MoveNet
+import com.example.perfectcamerademo.posedetect.MoveNetOvo
 import com.example.perfectcamerademo.tensor.ml.PoseClassifier
 import com.example.perfectcamerademo.posedetect.PoseNet
 
@@ -137,6 +138,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_pose)
+//        MoveNetOvo.init(this)
         // keep screen on while app is running
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         tvScore = findViewById(R.id.tvScore)

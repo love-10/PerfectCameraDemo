@@ -8,6 +8,7 @@ import android.view.Surface
 import androidx.appcompat.app.AppCompatActivity
 import com.example.perfectcamerademo.Kalman.KalmanPro
 import com.example.perfectcamerademo.databinding.ActivityMainBinding
+import com.example.perfectcamerademo.posedetect.MoveNetOvo
 import com.google.gson.Gson
 import dev.utils.app.ScreenUtils
 import dev.utils.app.image.BitmapUtils
@@ -41,6 +42,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         OpenCVLoader.initLocal()
+        MoveNetOvo.init(this)
         binding.cameraview.onSurfaceChangedListener =
             object : SelfSurfaceView.OnSurfaceChangedListener {
                 override fun onSurfaceChange(surface: Surface) {

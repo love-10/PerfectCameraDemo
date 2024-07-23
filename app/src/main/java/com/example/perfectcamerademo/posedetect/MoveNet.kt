@@ -39,8 +39,7 @@ import kotlin.math.min
 
 enum class ModelType {
     Lightning,
-    Thunder,
-    PoseNet
+    Thunder
 }
 
 class MoveNet(private val interpreter: Interpreter, private var gpuDelegate: GpuDelegate?) :
