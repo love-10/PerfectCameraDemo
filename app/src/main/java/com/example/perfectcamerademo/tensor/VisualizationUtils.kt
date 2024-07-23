@@ -26,10 +26,10 @@ import kotlin.math.max
 
 object VisualizationUtils {
     /** Radius of circle used to draw keypoints.  */
-    private const val CIRCLE_RADIUS = 6f
+    public const val CIRCLE_RADIUS = 60f
 
     /** Width of line used to connected two keypoints.  */
-    private const val LINE_WIDTH = 4f
+     const val LINE_WIDTH = 4f
 
     /** The text size of the person id that will be displayed when the tracker is available.  */
     private const val PERSON_ID_TEXT_SIZE = 30f

@@ -17,6 +17,5 @@ limitations under the License.
 package com.example.perfectcamerademo.posedetect.data
 
 import android.graphics.PointF
-import com.example.perfectcamerademo.posedetect.data.BodyPart
 
 data class KeyPoint(val bodyPart: BodyPart, var coordinate: PointF, val score: Float)

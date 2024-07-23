@@ -39,7 +39,6 @@ import com.example.perfectcamerademo.tensor.camera.CameraSource
 import com.example.perfectcamerademo.posedetect.data.Device
 import com.example.perfectcamerademo.posedetect.ModelType
 import com.example.perfectcamerademo.posedetect.MoveNet
-import com.example.perfectcamerademo.posedetect.MoveNetOvo
 import com.example.perfectcamerademo.tensor.ml.PoseClassifier
 import com.example.perfectcamerademo.posedetect.PoseNet
 

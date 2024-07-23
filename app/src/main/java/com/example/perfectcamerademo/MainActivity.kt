@@ -3,21 +3,13 @@ package com.example.perfectcamerademo
 import android.graphics.BitmapFactory
 import android.graphics.Rect
 import android.os.Bundle
-import android.util.Log
 import android.view.Surface
 import androidx.appcompat.app.AppCompatActivity
-import com.example.perfectcamerademo.Kalman.KalmanPro
 import com.example.perfectcamerademo.databinding.ActivityMainBinding
-import com.example.perfectcamerademo.posedetect.MoveNetOvo
-import com.google.gson.Gson
+import com.example.perfectcamerademo.posedetect.MoveNetOvO
 import dev.utils.app.ScreenUtils
-import dev.utils.app.image.BitmapUtils
 import org.example.SingleKalman.log
 import org.opencv.android.OpenCVLoader
-import org.opencv.core.Core
-import org.opencv.core.CvType
-import org.opencv.core.Mat
-import org.opencv.core.Scalar
 
 class MainActivity : AppCompatActivity() {
 
@@ -42,7 +34,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         OpenCVLoader.initLocal()
-        MoveNetOvo.init(this)
+        MoveNetOvO.init(this)
         binding.cameraview.onSurfaceChangedListener =
             object : SelfSurfaceView.OnSurfaceChangedListener {
                 override fun onSurfaceChange(surface: Surface) {
@@ -56,15 +48,12 @@ class MainActivity : AppCompatActivity() {
         OpenCvDetector.init(this)
         val bitmap = BitmapFactory.decodeResource(resources, R.drawable.e)
         val time = System.currentTimeMillis()
-        val result = OpenCvDetector.run(bitmap)
+        val result = MoveNetOvO.run(bitmap)
+        val points = MoveNetOvO.getBodyPoints(result.first(), null)
+        val ret = MoveNetOvO.drawPoints(bitmap, points)
         log("time ${System.currentTimeMillis() - time}")
-        val newList = result.map {
-            FrameInfo().apply {
-                addBox(it.x, it.y, it.width, it.height, it.label, it.prop)
-            }
-        }
         log(result)
-        binding.img.setImageBitmap(DrawImage.drawResult(BitmapUtils.copy(bitmap), newList.toTypedArray(), null))
+        binding.img.setImageBitmap(ret)
     }
 
     public override fun onResume() {
