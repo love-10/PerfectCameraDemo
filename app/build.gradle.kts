@@ -70,4 +70,9 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("org.opencv:opencv:4.10.0")
     implementation("org.apache.commons:commons-math3:3.6.1")
+
+    implementation("org.tensorflow:tensorflow-lite:2.5.0")
+    implementation("org.tensorflow:tensorflow-lite-gpu:2.5.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.3.0")
+
 }
