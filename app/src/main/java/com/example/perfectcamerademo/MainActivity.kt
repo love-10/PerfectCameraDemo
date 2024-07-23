@@ -1,6 +1,8 @@
 package com.example.perfectcamerademo
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Rect
 import android.os.Bundle
 import android.view.Surface
@@ -14,11 +16,28 @@ import org.opencv.android.OpenCVLoader
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    fun convertToARGB8888(bitmap: Bitmap): Bitmap {
+        return if (bitmap.config != Bitmap.Config.ARGB_8888) {
+            val argbBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(argbBitmap)
+            canvas.drawBitmap(bitmap, 0f, 0f, null)
+            argbBitmap
+        } else {
+            bitmap
+        }
+    }
     private val yolo6 by lazy {
         Rect()
         Yolo6().apply {
             loadModel(assets, 0, 0, false) { bitmap, boxes ->
                 runOnUiThread {
+                    val time = System.currentTimeMillis()
+                    val result = MoveNetOvO.run(convertToARGB8888(bitmap))
+                    val points = MoveNetOvO.getBodyPoints(result.first(), null)
+                    //val ret = MoveNetOvO.drawPoints(bitmap, points)
+                    binding.trackView.updatePoints(points)
+                    log("time ${System.currentTimeMillis() - time}")
+                    log(result)
 //                    binding.img.setImageBitmap(bitmap)
 //                    binding.trackView.update(boxes.filter { it.label == 0 })
 //                }
@@ -46,14 +65,14 @@ class MainActivity : AppCompatActivity() {
         params.height = ScreenUtils.getScreenWidth() * 16 / 9
         binding.trackView.layoutParams = params
         OpenCvDetector.init(this)
-        val bitmap = BitmapFactory.decodeResource(resources, R.drawable.e)
-        val time = System.currentTimeMillis()
-        val result = MoveNetOvO.run(bitmap)
-        val points = MoveNetOvO.getBodyPoints(result.first(), null)
-        val ret = MoveNetOvO.drawPoints(bitmap, points)
-        log("time ${System.currentTimeMillis() - time}")
-        log(result)
-        binding.img.setImageBitmap(ret)
+//        val bitmap = BitmapFactory.decodeResource(resources, R.drawable.e)
+//        val time = System.currentTimeMillis()
+//        val result = MoveNetOvO.run(bitmap)
+//        val points = MoveNetOvO.getBodyPoints(result.first(), null)
+//        val ret = MoveNetOvO.drawPoints(bitmap, points)
+//        log("time ${System.currentTimeMillis() - time}")
+//        log(result)
+//        binding.img.setImageBitmap(ret)
     }
 
     public override fun onResume() {
