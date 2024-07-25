@@ -1,126 +1,45 @@
-import org.opencv.core.*
-import org.opencv.imgcodecs.Imgcodecs
-import org.opencv.imgproc.Imgproc
-import org.opencv.core.MatOfPoint
+import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.AccessibilityServiceInfo;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
+import android.util.Log;
+import android.view.accessibility.AccessibilityEvent;
 
-fun main() {
-    // 初始化OpenCV
-    System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
+public class MyAccessibilityService extends AccessibilityService {
 
-    // 读取图像
-    val src = Imgcodecs.imread("path_to_image.jpg")
+    @Override
+    public void onAccessibilityEvent(AccessibilityEvent event) {
+        if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            String packageName = event.getPackageName().toString();
+            Log.d("MyAccessibilityService", "Current app package: " + packageName);
 
-    // 转换为灰度图像
-    val gray = Mat()
-    Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY)
+            PackageManager pm = getPackageManager();
+            try {
+                ApplicationInfo appInfo = pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA);
+                String appName = pm.getApplicationLabel(appInfo).toString();
+                Drawable appIcon = pm.getApplicationIcon(appInfo);
 
-    // 使用高斯模糊平滑图像
-    Imgproc.GaussianBlur(gray, gray, Size(5.0, 5.0), 0.0)
-
-    // 使用Canny边缘检测
-    val edges = Mat()
-    Imgproc.Canny(gray, edges, 50.0, 150.0)
-
-    // 查找轮廓
-    val contours = ArrayList<MatOfPoint>()
-    val hierarchy = Mat()
-    Imgproc.findContours(edges, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE)
-
-    // 遍历所有轮廓，筛选出矩形轮廓
-    for (contour in contours) {
-        val approxCurve = MatOfPoint2f()
-        val contour2f = MatOfPoint2f(*contour.toArray())
-        val approxDistance = Imgproc.arcLength(contour2f, true) * 0.02
-        Imgproc.approxPolyDP(contour2f, approxCurve, approxDistance, true)
-        val points = approxCurve.toArray()
-
-        // 筛选出矩形（有4个顶点且面积较大）
-        if (points.size == 4 && Imgproc.contourArea(contour) > 1000) {
-            // 画出矩形
-            for (i in points.indices) {
-                Imgproc.line(src, points[i], points[(i + 1) % points.size], Scalar(0.0, 255.0, 0.0), 4)
+                Log.d("MyAccessibilityService", "Current app name: " + appName);
+                // 你可以在这里使用appIcon，比如显示在某个ImageView中
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
             }
         }
     }
 
-    // 显示或保存结果图像
-    Imgcodecs.imwrite("output_image.jpg", src)
-}
+    @Override
+    public void onInterrupt() {
+        // 处理中断的逻辑
+    }
 
-
-
-
-
-import android.graphics.Bitmap
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import org.opencv.android.Utils
-import org.opencv.core.*
-import org.opencv.imgcodecs.Imgcodecs
-import org.opencv.imgproc.Imgproc
-import org.opencv.android.OpenCVLoader
-import org.opencv.core.MatOfPoint
-import org.opencv.core.MatOfPoint2f
-
-class MainActivity : AppCompatActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        // 初始化OpenCV
-        if (!OpenCVLoader.initDebug()) {
-            // OpenCV加载失败
-            return
-        }
-
-        // 从资源加载图像
-        val bitmap = BitmapFactory.decodeResource(resources, R.drawable.sample_image)
-        val src = Mat()
-        Utils.bitmapToMat(bitmap, src)
-
-        // 转换为灰度图像
-        val gray = Mat()
-        Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY)
-
-        // 使用高斯模糊平滑图像
-        Imgproc.GaussianBlur(gray, gray, Size(5.0, 5.0), 0.0)
-
-        // 使用Canny边缘检测
-        val edges = Mat()
-        Imgproc.Canny(gray, edges, 50.0, 150.0)
-
-        // 查找轮廓
-        val contours = ArrayList<MatOfPoint>()
-        val hierarchy = Mat()
-        Imgproc.findContours(edges, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE)
-
-        // 遍历所有轮廓，筛选出垂直矩形轮廓
-        for (contour in contours) {
-            val approxCurve = MatOfPoint2f()
-            val contour2f = MatOfPoint2f(*contour.toArray())
-            val approxDistance = Imgproc.arcLength(contour2f, true) * 0.02
-            Imgproc.approxPolyDP(contour2f, approxCurve, approxDistance, true)
-            val points = approxCurve.toArray()
-
-            // 筛选出矩形（有4个顶点且面积较大）
-            if (points.size == 4 && Imgproc.contourArea(contour) > 1000) {
-                // 计算边界框
-                val rect = Imgproc.boundingRect(MatOfPoint(*points))
-
-                // 检查矩形是否接近垂直
-                val aspectRatio = rect.height.toFloat() / rect.width.toFloat()
-                if (aspectRatio > 1.2) {
-                    // 画出矩形
-                    Imgproc.rectangle(src, rect.tl(), rect.br(), Scalar(0.0, 255.0, 0.0), 4)
-                }
-            }
-        }
-
-        // 将结果转换为Bitmap并显示
-        val resultBitmap = Bitmap.createBitmap(src.cols(), src.rows(), Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(src, resultBitmap)
-        // 设置到ImageView (假设你有一个ImageView)
-        findViewById<ImageView>(R.id.imageView).setImageBitmap(resultBitmap)
+    @Override
+    protected void onServiceConnected() {
+        super.onServiceConnected();
+        AccessibilityServiceInfo info = new AccessibilityServiceInfo();
+        info.eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
+        info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
+        info.flags = AccessibilityServiceInfo.DEFAULT;
+        setServiceInfo(info);
     }
 }
