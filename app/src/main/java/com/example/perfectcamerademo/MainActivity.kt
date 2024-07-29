@@ -44,12 +44,18 @@ class MainActivity : AppCompatActivity() {
         params.width = ScreenUtils.getScreenWidth()
         params.height = ScreenUtils.getScreenWidth() * 16 / 9
         binding.trackView.layoutParams = params
-        yolo6.setCallBack { bitmap, boxes ->
+    }
+
+    public override fun onResume() {
+        super.onResume()
+        yolo6.openCamera(CameraFacing.BACK.ordinal, 0) { bitmap, boxes ->
             runOnUiThread {
                 val time = System.currentTimeMillis()
                 val result = MoveNetOvO.run(convertToARGB8888(bitmap))
                 val points = MoveNetOvO.getBodyPoints(result.first(), null)
 //                val ret = MoveNetOvO.drawPoints(bitmap, points)
+                binding.trackView.update(
+                    yolo6.detect(convertToARGB8888(bitmap)).filter { it.label == 0 })
                 binding.trackView.updatePoints(points)
                 log("time ${System.currentTimeMillis() - time}")
 //                log(result)
@@ -60,11 +66,6 @@ class MainActivity : AppCompatActivity() {
 //                Log.d("xxxxx", "box ${Gson().toJson(boxes)}")
             }
         }
-    }
-
-    public override fun onResume() {
-        super.onResume()
-        yolo6.openCamera(CameraFacing.BACK.ordinal, 0)
     }
 
     public override fun onPause() {

@@ -24,9 +24,8 @@ import java.util.BitSet;
 public class Yolo6 {
     public native boolean loadModel(AssetManager mgr, int modelId, int cpuOrGpu, boolean isDraw);
 
-    public native void setCallBack(OnBitMapCallback bitMapCallback);
 
-    public native boolean openCamera(int facing, int cameraId);
+    public native boolean openCamera(int facing, int cameraId, OnBitMapCallback bitMapCallback);
 
     public native boolean closeCamera();
 

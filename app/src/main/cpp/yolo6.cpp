@@ -279,6 +279,7 @@ void bitmapCallBack(cv::Mat &rgb, std::vector<Object> objects, unsigned char *or
 }
 
 static Yolo *g_yolo = 0;
+static Yolo *m_yolo = 0;
 static ncnn::Mutex lock;
 
 class MyNdkCamera : public NdkCameraWindow {
@@ -329,6 +330,9 @@ JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) {
 
         delete g_yolo;
         g_yolo = 0;
+
+        delete m_yolo;
+        m_yolo = 0;
     }
 
     delete g_camera;
@@ -404,18 +408,18 @@ Java_com_example_perfectcamerademo_Yolo6_loadModel(JNIEnv *env, jobject thiz, jo
                 g_yolo = new Yolo;
             g_yolo->load(mgr, modeltype, target_size, mean_vals[(int) modelid],
                          norm_vals[(int) modelid], use_gpu);
+
+            if (!m_yolo)
+                m_yolo = new Yolo;
+            m_yolo->load(mgr, modeltype, target_size, mean_vals[(int) modelid],
+                         norm_vals[(int) modelid], use_gpu);
         }
     }
 
     return JNI_TRUE;
 }
 // public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
-extern "C" void
-Java_com_example_perfectcamerademo_Yolo6_setCallBack(JNIEnv *env, jobject thiz, jobject bCallBack) {
-    jclass clz = (*env).GetObjectClass(bCallBack);
-    bClz = static_cast<jclass>((*env).NewGlobalRef(clz));
-    bObj = (*env).NewGlobalRef(bCallBack);
-}
+
 
 // public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
 extern "C" jobject
@@ -424,7 +428,7 @@ Java_com_example_perfectcamerademo_Yolo6_detect(JNIEnv *env, jobject thiz, jobje
 
     std::vector<Object> objects;
     jclass list_cls = env->FindClass("java/util/ArrayList");//获得ArrayList类引用
-    g_yolo->detect(bitmapToMat(env, bitmap), objects);
+    m_yolo->detect(bitmapToMat(env, bitmap), objects);
 
     jmethodID list_costruct = env->GetMethodID(list_cls, "<init>", "()V"); //获得得构造函数Id
 
@@ -452,10 +456,12 @@ Java_com_example_perfectcamerademo_Yolo6_detect(JNIEnv *env, jobject thiz, jobje
 // public native boolean openCamera(int facing);
 extern "C" jboolean
 Java_com_example_perfectcamerademo_Yolo6_openCamera(JNIEnv *env, jobject thiz, jint facing,
-                                                    jint the_camera_id) {
+                                                    jint the_camera_id, jobject bCallBack) {
     if (facing < 0 || facing > 1)
         return JNI_FALSE;
-
+    jclass clz = (*env).GetObjectClass(bCallBack);
+    bClz = static_cast<jclass>((*env).NewGlobalRef(clz));
+    bObj = (*env).NewGlobalRef(bCallBack);
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "openCamera %d", facing);
 
     g_camera->open((int) facing, (int) the_camera_id);
@@ -467,7 +473,8 @@ Java_com_example_perfectcamerademo_Yolo6_openCamera(JNIEnv *env, jobject thiz, j
 extern "C" jboolean
 Java_com_example_perfectcamerademo_Yolo6_closeCamera(JNIEnv *env, jobject thiz) {
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "closeCamera");
-
+    bClz = NULL;
+    bObj = NULL;
     g_camera->close();
 
     return JNI_TRUE;
