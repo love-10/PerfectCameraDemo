@@ -338,15 +338,10 @@ JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) {
 // public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
 extern "C" jboolean
 Java_com_example_perfectcamerademo_Yolo6_loadModel(JNIEnv *env, jobject thiz, jobject assetManager,
-                                                   jint modelid, jint cpugpu, jboolean isDraw,
-                                                   jobject bCallBack) {
+                                                   jint modelid, jint cpugpu, jboolean isDraw) {
     if (modelid < 0 || modelid > 4 || cpugpu < 0 || cpugpu > 1) {
         return JNI_FALSE;
     }
-
-    jclass clz = (*env).GetObjectClass(bCallBack);
-    bClz = static_cast<jclass>((*env).NewGlobalRef(clz));
-    bObj = (*env).NewGlobalRef(bCallBack);
     jclass stu_cls = env->FindClass("com/example/perfectcamerademo/Box");//获得Student类引用
     sClz = static_cast<jclass>((*env).NewGlobalRef(stu_cls));
     needDraw = isDraw;
@@ -413,6 +408,13 @@ Java_com_example_perfectcamerademo_Yolo6_loadModel(JNIEnv *env, jobject thiz, jo
     }
 
     return JNI_TRUE;
+}
+// public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
+extern "C" void
+Java_com_example_perfectcamerademo_Yolo6_setCallBack(JNIEnv *env, jobject thiz, jobject bCallBack) {
+    jclass clz = (*env).GetObjectClass(bCallBack);
+    bClz = static_cast<jclass>((*env).NewGlobalRef(clz));
+    bObj = (*env).NewGlobalRef(bCallBack);
 }
 
 // public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
