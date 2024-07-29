@@ -75,4 +75,6 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite-gpu:2.5.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.3.0")
 
+    implementation("com.google.mlkit:face-detection:16.1.6")
+
 }
