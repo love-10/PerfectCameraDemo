@@ -1,5 +1,9 @@
 package com.example.perfectcamerademo
 
+import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
+import android.graphics.Rect
+import android.graphics.YuvImage
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -13,6 +17,7 @@ import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.Scalar
+import java.io.ByteArrayOutputStream
 
 class TheActivity : AppCompatActivity() {
     // 导入 OpenCV 库
@@ -35,15 +40,39 @@ class TheActivity : AppCompatActivity() {
                     super.onCameraOpened(options)
                 }
             })
-            addFrameProcessor {
-                //log("format ${it.format}")
+            addFrameProcessor { frame ->
+                if (frame.format == ImageFormat.NV21
+                    && frame.dataClass == ByteArray::class.java
+                ) {
+                    val data = frame.getData<ByteArray>()
+                    val yuvImage = YuvImage(
+                        data,
+                        frame.format,
+                        frame.size.width,
+                        frame.size.height,
+                        null
+                    )
+                    val jpegStream = ByteArrayOutputStream()
+                    yuvImage.compressToJpeg(
+                        Rect(
+                            0, 0,
+                            frame.size.width,
+                            frame.size.height
+                        ), 100, jpegStream
+                    )
+                    val jpegByteArray = jpegStream.toByteArray()
+                    val bitmap = BitmapFactory.decodeByteArray(
+                        jpegByteArray,
+                        0, jpegByteArray.size
+                    )
+                }
             }
             setLifecycleOwner(this@TheActivity)
         }
         val Q = Mat.eye(6, 6, CvType.CV_64F).apply {
             Core.multiply(this, Scalar(0.1), this)
         }
-        log(Q.get(1,1))
+        log(Q.get(1, 1))
         val params = binding.trackView.layoutParams
         params.width = ScreenUtils.getScreenWidth()
         params.height = ScreenUtils.getScreenWidth() * 16 / 9
