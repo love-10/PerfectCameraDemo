@@ -27,6 +27,7 @@
 #include <benchmark.h>
 
 #include "yolo.h"
+#include "yoloface.h"
 
 #include "ndkcamera.h"
 
@@ -45,6 +46,11 @@ jobject bObj;
 
 jclass sClz;
 static jboolean needDraw = false;
+
+static Yolo *g_yolo = 0;
+static Yolo *m_yolo = 0;
+static YoloFace *g_yoloface = 0;
+static ncnn::Mutex lock;
 
 static int draw_unsupported(cv::Mat &rgb) {
     const char text[] = "unsupported";
@@ -278,9 +284,48 @@ void bitmapCallBack(cv::Mat &rgb, std::vector<Object> objects, unsigned char *or
     g_vm->DetachCurrentThread();
 }
 
-static Yolo *g_yolo = 0;
-static Yolo *m_yolo = 0;
-static ncnn::Mutex lock;
+void loadFaceModel(JNIEnv *env, jobject assetManager) {
+    int modelid = 0;
+    int cpugpu = 0;
+
+    AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);
+
+    __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "loadModel %p", mgr);
+
+    const char *modeltypes[] =
+            {
+                    "yolov5n-0.5",
+            };
+
+    const int target_sizes[] =
+            {
+                    320,
+            };
+
+    const float mean_vals[][3] =
+            {
+                    {127.f, 127.f, 127.f},
+            };
+
+    const float norm_vals[][3] =
+            {
+                    {1 / 255.f, 1 / 255.f, 1 / 255.f},
+            };
+
+    const char *modeltype = modeltypes[(int) modelid];
+    int target_size = target_sizes[(int) modelid];
+    bool use_gpu = false;
+
+    // reload
+    {
+        ncnn::MutexLockGuard g(lock);
+
+        if (!g_yoloface)
+            g_yoloface = new YoloFace;
+        g_yoloface->load(mgr, modeltype, target_size, mean_vals[(int) modelid],
+                         norm_vals[(int) modelid], use_gpu);
+    }
+}
 
 class MyNdkCamera : public NdkCameraWindow {
 public:
@@ -290,6 +335,7 @@ public:
 void
 MyNdkCamera::on_image_render(cv::Mat &rgb, unsigned char *origin, int width, int height) const {
     // nanodet
+
     std::vector<Object> objects;
     {
         ncnn::MutexLockGuard g(lock);
@@ -333,6 +379,9 @@ JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) {
 
         delete m_yolo;
         m_yolo = 0;
+
+        delete g_yoloface;
+        g_yoloface = 0;
     }
 
     delete g_camera;
@@ -346,6 +395,7 @@ Java_com_example_perfectcamerademo_Yolo6_loadModel(JNIEnv *env, jobject thiz, jo
     if (modelid < 0 || modelid > 4 || cpugpu < 0 || cpugpu > 1) {
         return JNI_FALSE;
     }
+    loadFaceModel(env, assetManager);
     jclass stu_cls = env->FindClass("com/example/perfectcamerademo/Box");//获得Student类引用
     sClz = static_cast<jclass>((*env).NewGlobalRef(stu_cls));
     needDraw = isDraw;
@@ -418,7 +468,6 @@ Java_com_example_perfectcamerademo_Yolo6_loadModel(JNIEnv *env, jobject thiz, jo
 
     return JNI_TRUE;
 }
-// public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
 
 
 // public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
@@ -441,6 +490,36 @@ Java_com_example_perfectcamerademo_Yolo6_detect(JNIEnv *env, jobject thiz, jobje
 
     for (int i = 0; i < objects.size(); i++) {
         const Object &obj = objects[i];
+        //通过调用该对象的构造函数来new 一个 Student实例
+        jobject stu_obj = env->NewObject(sClz, stu_costruct, obj.rect.x, obj.rect.y,
+                                         obj.rect.width, obj.rect.height, obj.prob,
+                                         obj.label);  //构造一个对象
+
+        env->CallBooleanMethod(list_obj, list_add, stu_obj); //执行Arraylist类实例的add方法，添加一个stu对象
+    }
+
+    return list_obj;
+}
+
+extern "C" jobject
+Java_com_example_perfectcamerademo_Yolo6_detectFace(JNIEnv *env, jobject thiz, jobject bitmap) {
+
+
+    std::vector<ObjectFace> objects;
+    jclass list_cls = env->FindClass("java/util/ArrayList");//获得ArrayList类引用
+    g_yoloface->detect(bitmapToMat(env, bitmap), objects);
+
+    jmethodID list_costruct = env->GetMethodID(list_cls, "<init>", "()V"); //获得得构造函数Id
+
+    jobject list_obj = env->NewObject(list_cls, list_costruct); //创建一个Arraylist集合对象
+    //或得Arraylist类中的 add()方法ID，其方法原型为： boolean add(Object object) ;
+    jmethodID list_add = env->GetMethodID(list_cls, "add", "(Ljava/lang/Object;)Z");
+
+    //获得该类型的构造函数  函数名为 <init> 返回类型必须为 void 即 V
+    jmethodID stu_costruct = env->GetMethodID(sClz, "<init>", "(FFFFFI)V");
+
+    for (int i = 0; i < objects.size(); i++) {
+        const ObjectFace &obj = objects[i];
         //通过调用该对象的构造函数来new 一个 Student实例
         jobject stu_obj = env->NewObject(sClz, stu_costruct, obj.rect.x, obj.rect.y,
                                          obj.rect.width, obj.rect.height, obj.prob,

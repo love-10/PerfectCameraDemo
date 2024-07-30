@@ -51,12 +51,15 @@ class MainActivity : AppCompatActivity() {
         yolo6.openCamera(CameraFacing.BACK.ordinal, 0) { bitmap, boxes ->
             runOnUiThread {
                 val time = System.currentTimeMillis()
-                val result = MoveNetOvO.run(convertToARGB8888(bitmap))
-                val points = MoveNetOvO.getBodyPoints(result.first(), null)
+//                val result = MoveNetOvO.run(convertToARGB8888(bitmap))
+//                val points = MoveNetOvO.getBodyPoints(result.first(), null)
 //                val ret = MoveNetOvO.drawPoints(bitmap, points)
-                binding.trackView.update(
-                    yolo6.detect(convertToARGB8888(bitmap)).filter { it.label == 0 })
-                binding.trackView.updatePoints(points)
+                val ret = yolo6.detectFace(convertToARGB8888(bitmap))
+                val ret1 = yolo6.detect(convertToARGB8888(bitmap))
+                ret.addAll(ret1)
+                log(ret)
+                binding.trackView.update(ret)
+//                binding.trackView.updatePoints(points)
                 log("time ${System.currentTimeMillis() - time}")
 //                log(result)
 //                    binding.img.setImageBitmap(bitmap)

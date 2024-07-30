@@ -32,6 +32,7 @@ public class Yolo6 {
     public native boolean setOutputWindow(Surface surface);
 
     public native ArrayList<Box> detect(Bitmap bitmap);
+    public native ArrayList<Box> detectFace(Bitmap bitmap);
 
     static {
         System.loadLibrary("yolo6");
