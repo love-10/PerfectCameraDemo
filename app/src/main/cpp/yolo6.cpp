@@ -320,7 +320,7 @@ void
 MyNdkCamera::on_image_render(cv::Mat &rgb, unsigned char *origin, int width, int height) const {
     // nanodet
 
-    std::vector<SegObject> objects;
+    std::vector<Object> objects;
     {
         ncnn::MutexLockGuard g(lock);
 
@@ -329,7 +329,7 @@ MyNdkCamera::on_image_render(cv::Mat &rgb, unsigned char *origin, int width, int
             seg_yolo->detect(rgb, objects, true);
 
             if (needDraw) {
-                seg_yolo->draw(rgb, objects, false);
+                seg_yolo->draw(rgb, objects, true);
             }
 
         }

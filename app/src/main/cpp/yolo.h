@@ -15,16 +15,9 @@
 #ifndef YOLO_H
 #define YOLO_H
 
-#include <opencv2/core/core.hpp>
+#include "object.h"
 
 #include <net.h>
-
-struct Object
-{
-    cv::Rect_<float> rect;
-    int label;
-    float prob;
-};
 
 class Yolo
 {

@@ -152,12 +152,12 @@ static void matmul(const std::vector<ncnn::Mat> &bottom_blobs, ncnn::Mat &top_bl
     delete op;
 }
 
-static float intersection_area(const SegObject &a, const SegObject &b) {
+static float intersection_area(const Object &a, const Object &b) {
     cv::Rect_<float> inter = a.rect & b.rect;
     return inter.area();
 }
 
-static void qsort_descent_inplace(std::vector<SegObject> &faceobjects, int left, int right) {
+static void qsort_descent_inplace(std::vector<Object> &faceobjects, int left, int right) {
     int i = left;
     int j = right;
     float p = faceobjects[(left + right) / 2].prob;
@@ -191,14 +191,14 @@ static void qsort_descent_inplace(std::vector<SegObject> &faceobjects, int left,
     }
 }
 
-static void qsort_descent_inplace(std::vector<SegObject> &faceobjects) {
+static void qsort_descent_inplace(std::vector<Object> &faceobjects) {
     if (faceobjects.empty())
         return;
 
     qsort_descent_inplace(faceobjects, 0, faceobjects.size() - 1);
 }
 
-static void nms_sorted_bboxes(const std::vector<SegObject> &faceobjects, std::vector<int> &picked,
+static void nms_sorted_bboxes(const std::vector<Object> &faceobjects, std::vector<int> &picked,
                               float nms_threshold) {
     picked.clear();
 
@@ -210,11 +210,11 @@ static void nms_sorted_bboxes(const std::vector<SegObject> &faceobjects, std::ve
     }
 
     for (int i = 0; i < n; i++) {
-        const SegObject &a = faceobjects[i];
+        const Object &a = faceobjects[i];
 
         int keep = 1;
         for (int j = 0; j < (int) picked.size(); j++) {
-            const SegObject &b = faceobjects[picked[j]];
+            const Object &b = faceobjects[picked[j]];
 
             // intersection over union
             float inter_area = intersection_area(a, b);
@@ -230,7 +230,7 @@ static void nms_sorted_bboxes(const std::vector<SegObject> &faceobjects, std::ve
 }
 
 static void generate_proposals(std::vector<GridAndStride> grid_strides, const ncnn::Mat &pred,
-                               float prob_threshold, std::vector<SegObject> &objects) {
+                               float prob_threshold, std::vector<Object> &objects) {
     const int num_points = grid_strides.size();
     const int num_class = 80;
     const int reg_max_1 = 16;
@@ -291,7 +291,7 @@ static void generate_proposals(std::vector<GridAndStride> grid_strides, const nc
             float x1 = pb_cx + pred_ltrb[2];
             float y1 = pb_cy + pred_ltrb[3];
 
-            SegObject obj;
+            Object obj;
             obj.rect.x = x0;
             obj.rect.y = y0;
             obj.rect.width = x1 - x0;
@@ -373,7 +373,7 @@ int YoloSeg::load(AAssetManager *mgr) {
     return 0;
 }
 
-int YoloSeg::detect(const cv::Mat &rgb, std::vector<SegObject> &objects, bool needMark, float prob_threshold,
+int YoloSeg::detect(const cv::Mat &rgb, std::vector<Object> &objects, bool needMark, float prob_threshold,
                     float nms_threshold) {
     int width = rgb.cols;
     int height = rgb.rows;
@@ -421,8 +421,8 @@ int YoloSeg::detect(const cv::Mat &rgb, std::vector<SegObject> &objects, bool ne
     std::vector<GridAndStride> grid_strides;
     generate_grids_and_stride(in_pad.w, in_pad.h, strides, grid_strides);
 
-    std::vector<SegObject> proposals;
-    std::vector<SegObject> objects8;
+    std::vector<Object> proposals;
+    std::vector<Object> objects8;
     generate_proposals(grid_strides, out, prob_threshold, objects8);
     proposals.insert(proposals.end(), objects8.begin(), objects8.end());
 
@@ -477,7 +477,7 @@ int YoloSeg::detect(const cv::Mat &rgb, std::vector<SegObject> &objects, bool ne
     return 0;
 }
 
-int YoloSeg::draw(cv::Mat &rgb, const std::vector<SegObject> &objects, bool needMark) {
+int YoloSeg::draw(cv::Mat &rgb, const std::vector<Object> &objects, bool needMark) {
     static const char *class_names[] = {
             "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat",
             "traffic light",
@@ -610,74 +610,74 @@ int YoloSeg::draw(cv::Mat &rgb, const std::vector<SegObject> &objects, bool need
 //    cv::filter2D(rgb, rgb, -1, kernel);
 
     // Step 2: 识别高亮区域，使用阈值来确定哪些像素是亮点
-    cv::Mat grayMat, brightSpots;
-    cv::cvtColor(rgb, grayMat, cv::COLOR_BGR2GRAY);  // 转为灰度图
-    cv::threshold(grayMat, brightSpots, 200, 255, cv::THRESH_BINARY);  // 检测亮点
+//    cv::Mat grayMat, brightSpots;
+//    cv::cvtColor(rgb, grayMat, cv::COLOR_BGR2GRAY);  // 转为灰度图
+//    cv::threshold(grayMat, brightSpots, 200, 255, cv::THRESH_BINARY);  // 检测亮点
+//
+//    // Step 3: 在亮点位置生成光斑
+//    // 创建光斑的形状，可以使用一个自定义的核，比如模拟圆形或星形光斑
+//    cv::Mat bokehKernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(1, 1));
+//
+//    // 使用膨胀操作来加大光斑的区域
+//    cv::dilate(brightSpots, brightSpots, bokehKernel);
+//
+//    // 将膨胀后的亮点区域加到模糊背景中
+//    std::vector<cv::Mat> channels;
+//    cv::split(rgb, channels);  // 分离颜色通道
+//    channels[0] += brightSpots;  // 在蓝色通道上添加光斑（可根据效果修改）
+//    channels[1] += brightSpots;  // 添加到绿色通道
+//    channels[2] += brightSpots;  // 添加到红色通道
+//    cv::merge(channels, rgb);  // 合并通道
 
-    // Step 3: 在亮点位置生成光斑
-    // 创建光斑的形状，可以使用一个自定义的核，比如模拟圆形或星形光斑
-    cv::Mat bokehKernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(1, 1));
+    for (size_t i = 0; i < objects.size(); i++) {
+        const Object &obj = objects[i];
+        const unsigned char *color = colors[color_index % 80];
+        color_index++;
 
-    // 使用膨胀操作来加大光斑的区域
-    cv::dilate(brightSpots, brightSpots, bokehKernel);
+        cv::Scalar cc(color[0], color[1], color[2]);
 
-    // 将膨胀后的亮点区域加到模糊背景中
-    std::vector<cv::Mat> channels;
-    cv::split(rgb, channels);  // 分离颜色通道
-    channels[0] += brightSpots;  // 在蓝色通道上添加光斑（可根据效果修改）
-    channels[1] += brightSpots;  // 添加到绿色通道
-    channels[2] += brightSpots;  // 添加到红色通道
-    cv::merge(channels, rgb);  // 合并通道
+        fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label, obj.prob,
+                obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
+        if (needMark) {
+            for (int y = 0; y < rgb.rows; y++) {
+                uchar *image_ptr = rgb.ptr(y);
+                const float *mask_ptr = obj.mask.ptr<float>(y);
+                for (int x = 0; x < rgb.cols; x++) {
+                    if (mask_ptr[x] >= 0.5) {
+                        image_ptr[0] = cv::saturate_cast<uchar>(
+                                image_ptr[0] * 0.5 + color[2] * 0.5);
+                        image_ptr[1] = cv::saturate_cast<uchar>(
+                                image_ptr[1] * 0.5 + color[1] * 0.5);
+                        image_ptr[2] = cv::saturate_cast<uchar>(
+                                image_ptr[2] * 0.5 + color[0] * 0.5);
+                    }
+                    image_ptr += 3;
+                }
+            }
+        }
 
-//    for (size_t i = 0; i < objects.size(); i++) {
-//        const SegObject &obj = objects[i];
-//        const unsigned char *color = colors[color_index % 80];
-//        color_index++;
-//
-//        cv::Scalar cc(color[0], color[1], color[2]);
-//
-//        fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label, obj.prob,
-//                obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
-//        if (needMark) {
-//            for (int y = 0; y < rgb.rows; y++) {
-//                uchar *image_ptr = rgb.ptr(y);
-//                const float *mask_ptr = obj.mask.ptr<float>(y);
-//                for (int x = 0; x < rgb.cols; x++) {
-//                    if (mask_ptr[x] >= 0.5) {
-//                        image_ptr[0] = cv::saturate_cast<uchar>(
-//                                image_ptr[0] * 0.5 + color[2] * 0.5);
-//                        image_ptr[1] = cv::saturate_cast<uchar>(
-//                                image_ptr[1] * 0.5 + color[1] * 0.5);
-//                        image_ptr[2] = cv::saturate_cast<uchar>(
-//                                image_ptr[2] * 0.5 + color[0] * 0.5);
-//                    }
-//                    image_ptr += 3;
-//                }
-//            }
-//        }
-//
-//        cv::rectangle(rgb, obj.rect, cc, 2);
-//
-//        char text[256];
-//        sprintf(text, "%s %.1f%%", class_names[obj.label], obj.prob * 100);
-//
-//        int baseLine = 0;
-//        cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
-//
-//        int x = obj.rect.x;
-//        int y = obj.rect.y - label_size.height - baseLine;
-//        if (y < 0)
-//            y = 0;
-//        if (x + label_size.width > rgb.cols)
-//            x = rgb.cols - label_size.width;
-//
-//        cv::rectangle(rgb, cv::Rect(cv::Point(x, y),
-//                                    cv::Size(label_size.width, label_size.height + baseLine)),
-//                      cv::Scalar(255, 255, 255), -1);
-//
-//        cv::putText(rgb, text, cv::Point(x, y + label_size.height),
-//                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
-//    }
+        cv::rectangle(rgb, obj.rect, cc, 2);
+
+        char text[256];
+        sprintf(text, "%s %.1f%%", class_names[obj.label], obj.prob * 100);
+
+        int baseLine = 0;
+        cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
+
+        int x = obj.rect.x;
+        int y = obj.rect.y - label_size.height - baseLine;
+        if (y < 0)
+            y = 0;
+        if (x + label_size.width > rgb.cols)
+            x = rgb.cols - label_size.width;
+
+        cv::rectangle(rgb, cv::Rect(cv::Point(x, y),
+                                    cv::Size(label_size.width, label_size.height + baseLine)),
+                      cv::Scalar(255, 255, 255), -1);
+
+        cv::putText(rgb, text, cv::Point(x, y + label_size.height),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
+    }
 
     return 0;
 }
