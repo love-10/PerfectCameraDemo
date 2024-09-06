@@ -497,7 +497,6 @@ int YoloSeg::draw(cv::Mat &rgb, const std::vector<SegObject> &objects, bool need
             "scissors", "teddy bear",
             "hair drier", "toothbrush"
     };
-//    static const char* class_names[] = {"blur", "phone", "reflectLight", "reflection"};
     static const unsigned char colors[81][3] = {
             {56,  0,   255},
             {226, 255, 0},
@@ -582,10 +581,54 @@ int YoloSeg::draw(cv::Mat &rgb, const std::vector<SegObject> &objects, bool need
             {245, 255, 0}
     };
     int color_index = 0;
-    // 定义高斯核大小 (kernelSize x kernelSize)
-    cv::Size kSize(25, 25);
 
-    cv::GaussianBlur(rgb, rgb, kSize, 0);
+    // 高斯模糊
+//    cv::Size kSize(5, 5);
+//    cv::GaussianBlur(rgb, rgb, kSize, 0);
+
+    //  光圈模糊（Aperture Blur / Bokeh）
+//    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(1, 2));
+//    cv::filter2D(rgb, rgb, -50, kernel);
+
+    // 径向模糊（Radial Blur）
+//    cv::Point center(rgb.cols / 2, rgb.rows / 2);
+//    int maxRadius = std::min(rgb.cols, rgb.rows) / 2;
+//    for (int y = 0; y < rgb.rows; y++) {
+//        for (int x = 0; x < rgb.cols; x++) {
+//            // 计算到中心点的距离
+//            float distance = cv::norm(cv::Point(x, y) - center);
+//            float blurAmount = (distance / maxRadius) * 15;  // 逐渐增加模糊强度
+//            cv::GaussianBlur(rgb, rgb, cv::Size(blurAmount, blurAmount), 0);
+//        }
+//    }
+
+    // 运动模糊
+//    int kernel_size = 15;  // 定义运动模糊的强度
+//    cv::Mat kernel = cv::Mat::zeros(kernel_size, kernel_size, CV_32F);
+//    kernel.at<float>(kernel_size / 2, kernel_size / 2) = 1.0;
+//    cv::GaussianBlur(kernel, kernel, cv::Size(kernel_size, kernel_size), 0);
+//    cv::filter2D(rgb, rgb, -1, kernel);
+
+    // Step 2: 识别高亮区域，使用阈值来确定哪些像素是亮点
+    cv::Mat grayMat, brightSpots;
+    cv::cvtColor(rgb, grayMat, cv::COLOR_BGR2GRAY);  // 转为灰度图
+    cv::threshold(grayMat, brightSpots, 200, 255, cv::THRESH_BINARY);  // 检测亮点
+
+    // Step 3: 在亮点位置生成光斑
+    // 创建光斑的形状，可以使用一个自定义的核，比如模拟圆形或星形光斑
+    cv::Mat bokehKernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(1, 1));
+
+    // 使用膨胀操作来加大光斑的区域
+    cv::dilate(brightSpots, brightSpots, bokehKernel);
+
+    // 将膨胀后的亮点区域加到模糊背景中
+    std::vector<cv::Mat> channels;
+    cv::split(rgb, channels);  // 分离颜色通道
+    channels[0] += brightSpots;  // 在蓝色通道上添加光斑（可根据效果修改）
+    channels[1] += brightSpots;  // 添加到绿色通道
+    channels[2] += brightSpots;  // 添加到红色通道
+    cv::merge(channels, rgb);  // 合并通道
+
 //    for (size_t i = 0; i < objects.size(); i++) {
 //        const SegObject &obj = objects[i];
 //        const unsigned char *color = colors[color_index % 80];
