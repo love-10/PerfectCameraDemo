@@ -48,7 +48,7 @@ jclass sClz;
 static jboolean needDraw = false;
 
 static Yolo *g_yolo = 0;
-static Yolo *m_yolo = 0;
+static Yolo *detect_yolo = 0;
 static YoloFace *g_yoloface = 0;
 static ncnn::Mutex lock;
 
@@ -357,8 +357,8 @@ JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) {
         delete g_yolo;
         g_yolo = 0;
 
-        delete m_yolo;
-        m_yolo = 0;
+        delete detect_yolo;
+        detect_yolo = 0;
 
         delete g_yoloface;
         g_yoloface = 0;
@@ -439,10 +439,10 @@ Java_com_example_perfectcamerademo_Yolo6_loadModel(JNIEnv *env, jobject thiz, jo
             g_yolo->load(mgr, modeltype, target_size, mean_vals[(int) modelid],
                          norm_vals[(int) modelid], use_gpu);
 
-            if (!m_yolo)
-                m_yolo = new Yolo;
-            m_yolo->load(mgr, modeltype, target_size, mean_vals[(int) modelid],
-                         norm_vals[(int) modelid], use_gpu);
+            if (!detect_yolo)
+                detect_yolo = new Yolo;
+            detect_yolo->load(mgr, modeltype, target_size, mean_vals[(int) modelid],
+                              norm_vals[(int) modelid], use_gpu);
         }
     }
 
@@ -457,7 +457,7 @@ Java_com_example_perfectcamerademo_Yolo6_detect(JNIEnv *env, jobject thiz, jobje
 
     std::vector<Object> objects;
     jclass list_cls = env->FindClass("java/util/ArrayList");//获得ArrayList类引用
-    m_yolo->detect(bitmapToMat(env, bitmap), objects);
+    detect_yolo->detect(bitmapToMat(env, bitmap), objects);
 
     jmethodID list_costruct = env->GetMethodID(list_cls, "<init>", "()V"); //获得得构造函数Id
 
