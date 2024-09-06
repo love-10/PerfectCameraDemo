@@ -28,6 +28,7 @@
 
 #include "yolo.h"
 #include "yoloface.h"
+#include "yoloseg.h"
 
 #include "ndkcamera.h"
 
@@ -48,6 +49,7 @@ jclass sClz;
 static jboolean needDraw = false;
 
 static Yolo *g_yolo = 0;
+static YoloSeg *seg_yolo = 0;
 static Yolo *detect_yolo = 0;
 static YoloFace *g_yoloface = 0;
 static ncnn::Mutex lock;
@@ -318,16 +320,16 @@ void
 MyNdkCamera::on_image_render(cv::Mat &rgb, unsigned char *origin, int width, int height) const {
     // nanodet
 
-    std::vector<Object> objects;
+    std::vector<SegObject> objects;
     {
         ncnn::MutexLockGuard g(lock);
 
-        if (g_yolo) {
+        if (seg_yolo) {
 
-            g_yolo->detect(rgb, objects);
+            seg_yolo->detect(rgb, objects, true);
 
             if (needDraw) {
-                g_yolo->draw(rgb, objects);
+                seg_yolo->draw(rgb, objects, true);
             }
 
         }
@@ -356,6 +358,9 @@ JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) {
 
         delete g_yolo;
         g_yolo = 0;
+
+        delete seg_yolo;
+        seg_yolo = 0;
 
         delete detect_yolo;
         detect_yolo = 0;
@@ -438,6 +443,9 @@ Java_com_example_perfectcamerademo_Yolo6_loadModel(JNIEnv *env, jobject thiz, jo
                 g_yolo = new Yolo;
             g_yolo->load(mgr, modeltype, target_size, mean_vals[(int) modelid],
                          norm_vals[(int) modelid], use_gpu);
+            if (!seg_yolo)
+                seg_yolo = new YoloSeg;
+            seg_yolo->load(mgr);
 
             if (!detect_yolo)
                 detect_yolo = new Yolo;

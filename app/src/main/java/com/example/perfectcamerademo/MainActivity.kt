@@ -32,8 +32,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        OpenCVLoader.initLocal()
-        MoveNetOvO.init(this)
+//        OpenCVLoader.initLocal()
+//        MoveNetOvO.init(this)
         binding.cameraview.onSurfaceChangedListener =
             object : SelfSurfaceView.OnSurfaceChangedListener {
                 override fun onSurfaceChange(surface: Surface) {

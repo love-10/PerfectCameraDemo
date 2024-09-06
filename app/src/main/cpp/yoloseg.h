@@ -26,9 +26,9 @@ public:
 
     int load(AAssetManager* mgr);
 
-    int detect(const cv::Mat& rgb, std::vector<SegObject>& objects, float prob_threshold = 0.4f, float nms_threshold = 0.5f);
+    int detect(const cv::Mat& rgb, std::vector<SegObject>& objects, bool needMark = false, float prob_threshold = 0.4f, float nms_threshold = 0.5f);
 
-    int draw(cv::Mat& rgb, const std::vector<SegObject>& objects);
+    int draw(cv::Mat& rgb, const std::vector<SegObject>& objects, bool needMark = false);
 
 private:
     ncnn::Net yolo;
