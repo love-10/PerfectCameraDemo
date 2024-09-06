@@ -329,7 +329,7 @@ MyNdkCamera::on_image_render(cv::Mat &rgb, unsigned char *origin, int width, int
             seg_yolo->detect(rgb, objects, true);
 
             if (needDraw) {
-                seg_yolo->draw(rgb, objects, true);
+                seg_yolo->draw(rgb, objects, false);
             }
 
         }
