@@ -547,6 +547,26 @@ cv::Mat getPersonMask(const std::vector<Object> &objects) {
     return ret;
 }
 
+// 将图像转换为复古 (Sepia) 效果
+void applyVintageEffect(const cv::Mat& src) {
+    // 应用 Sepia 滤镜
+    cv::Mat sepiaKernel = (cv::Mat_<float>(3, 3) <<
+                                                 0.393, 0.769, 0.189,
+            0.349, 0.686, 0.168,
+            0.272, 0.534, 0.131);
+
+    cv::transform(src, src, sepiaKernel);
+
+    // 将值截断到有效范围
+    cv::normalize(src, src, 0, 255, cv::NORM_MINMAX);
+    src.convertTo(src, CV_8UC3);
+}
+
+// 添加噪声来模拟旧照片的效果
+void addNoise(cv::Mat& image) {
+    cv::randn(image, 0, 30);  // 正态分布噪声，标准差为30
+}
+
 int YoloSeg::draw(cv::Mat &rgb, const std::vector<Object> &objects, bool needMark) {
     if (objects.size() == 0 || !hasPerson(objects) || !needMark) {
         return 0;
@@ -560,6 +580,8 @@ int YoloSeg::draw(cv::Mat &rgb, const std::vector<Object> &objects, bool needMar
     cv::Mat mask = personMask(cropArea);
     cv::Mat origin = effect.clone();
 
+//    applyVintageEffect(effect);
+//    addNoise(effect);
 
     addBokehEffect(effect, 50, 2.0f, 15.0f);  // 100个光斑，最小半径为10，最大为50
     cv::GaussianBlur(effect, effect, cv::Size(15, 15), 0);
