@@ -507,210 +507,87 @@ void addVignetteEffect(cv::Mat &input) {
     vignetteImage.convertTo(input, CV_8UC3);
 }
 
-int YoloSeg::draw(cv::Mat &rgb, const std::vector<Object> &objects, bool needMark) {
-    static const char *class_names[] = {
-            "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat",
-            "traffic light",
-            "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse",
-            "sheep", "cow",
-            "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie",
-            "suitcase", "frisbee",
-            "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove",
-            "skateboard", "surfboard",
-            "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl",
-            "banana", "apple",
-            "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake",
-            "chair", "couch",
-            "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote",
-            "keyboard", "cell phone",
-            "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase",
-            "scissors", "teddy bear",
-            "hair drier", "toothbrush"
-    };
-    static const unsigned char colors[81][3] = {
-            {56,  0,   255},
-            {226, 255, 0},
-            {0,   94,  255},
-            {0,   37,  255},
-            {0,   255, 94},
-            {255, 226, 0},
-            {0,   18,  255},
-            {255, 151, 0},
-            {170, 0,   255},
-            {0,   255, 56},
-            {255, 0,   75},
-            {0,   75,  255},
-            {0,   255, 169},
-            {255, 0,   207},
-            {75,  255, 0},
-            {207, 0,   255},
-            {37,  0,   255},
-            {0,   207, 255},
-            {94,  0,   255},
-            {0,   255, 113},
-            {255, 18,  0},
-            {255, 0,   56},
-            {18,  0,   255},
-            {0,   255, 226},
-            {170, 255, 0},
-            {255, 0,   245},
-            {151, 255, 0},
-            {132, 255, 0},
-            {75,  0,   255},
-            {151, 0,   255},
-            {0,   151, 255},
-            {132, 0,   255},
-            {0,   255, 245},
-            {255, 132, 0},
-            {226, 0,   255},
-            {255, 37,  0},
-            {207, 255, 0},
-            {0,   255, 207},
-            {94,  255, 0},
-            {0,   226, 255},
-            {56,  255, 0},
-            {255, 94,  0},
-            {255, 113, 0},
-            {0,   132, 255},
-            {255, 0,   132},
-            {255, 170, 0},
-            {255, 0,   188},
-            {113, 255, 0},
-            {245, 0,   255},
-            {113, 0,   255},
-            {255, 188, 0},
-            {0,   113, 255},
-            {255, 0,   0},
-            {0,   56,  255},
-            {255, 0,   113},
-            {0,   255, 188},
-            {255, 0,   94},
-            {255, 0,   18},
-            {18,  255, 0},
-            {0,   255, 132},
-            {0,   188, 255},
-            {0,   245, 255},
-            {0,   169, 255},
-            {37,  255, 0},
-            {255, 0,   151},
-            {188, 0,   255},
-            {0,   255, 37},
-            {0,   255, 0},
-            {255, 0,   170},
-            {255, 0,   37},
-            {255, 75,  0},
-            {0,   0,   255},
-            {255, 207, 0},
-            {255, 0,   226},
-            {255, 245, 0},
-            {188, 255, 0},
-            {0,   255, 18},
-            {0,   255, 75},
-            {0,   255, 151},
-            {255, 56,  0},
-            {245, 255, 0}
-    };
-    int color_index = 0;
+cv::Rect getCropRect(cv::Mat bitmap, float scale) {
+    int width = bitmap.cols;
+    int height = bitmap.rows;
+    int left = (width - width * scale) / 2;
+    int top = (height - height * scale) / 2;
+    cv::Rect ret(left, top, width * scale, height * scale);
+    return ret;
+}
 
-    // 高斯模糊
+// 添加光斑滤镜函数
+void addBokehEffect(cv::Mat &image, int numCircles, float minRadius, float maxRadius) {
+    // 随机数种子
+    std::srand(std::time(0));
+
+    // 循环生成随机光斑
+    for (int i = 0; i < numCircles; ++i) {
+        // 随机选择圆心位置
+        int x = std::rand() % image.cols;
+        int y = std::rand() % image.rows;
+
+        // 随机生成半径
+        float radius =
+                minRadius + static_cast<float>(std::rand()) / RAND_MAX * (maxRadius - minRadius);
+
+        // 随机选择颜色
+        cv::Scalar color(std::rand() % 256, std::rand() % 256, std::rand() % 256);
+
+        // 绘制圆形光斑
+        cv::circle(image, cv::Point(x, y), static_cast<int>(radius), color, -1, cv::INTER_LINEAR);
+    }
+
+    // 高斯模糊光斑图像，增加柔和效果
+    cv::GaussianBlur(image, image, cv::Size(25, 24), 0);
+}
+
+// 还原人像位置的像素
+void resetPerson(cv::Mat origin, cv::Mat &effect, cv::Mat mask) {
+    int w = origin.cols;
+    int h = origin.rows;
+    for (int i = 0; i < h; i++) {
+        const float *mask_ptr = mask.ptr<float>(i);
+        for (int j = 0; j < w; j++) {
+            if (mask_ptr[j] >= 0.5) {
+                effect.at<cv::Vec3b>(i, j) = origin.at<cv::Vec3b>(i, j);
+            }
+        }
+    }
+}
+
+cv::Mat getPersonMask(const std::vector<Object> &objects) {
+    cv::Mat ret;
+    for (int i = 0; i < objects.size(); i++) {
+        const Object &obj = objects[i];
+        if (obj.label == 0) {
+            ret = obj.mask;
+            break;
+        }
+    }
+    return ret;
+}
+
+int YoloSeg::draw(cv::Mat &rgb, const std::vector<Object> &objects, bool needMark) {
+    if (objects.size() == 0) {
+        return 0;
+    }
+    cv::Rect cropArea = getCropRect(rgb, 0.67);
+
+    // 提取 ROI
+    cv::Mat effect = rgb(cropArea);
+    cv::Mat mask = getPersonMask(objects)(cropArea);
+    cv::Mat origin = effect.clone();
+
+
 //    cv::Size kSize(10, 10);
-//    cv::GaussianBlur(rgb, rgb, kSize, 0);
+//    cv::GaussianBlur(crop, crop, kSize, 0);
 
     // 为图像添加暗角效果，可以给图像一种复古或焦点集中的效果。
 //    addVignetteEffect(rgb);
 
-    //  光圈模糊（Aperture Blur / Bokeh）
-//    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(1, 2));
-//    cv::filter2D(rgb, rgb, -50, kernel);
-
-    // 径向模糊（Radial Blur）
-//    cv::Point center(rgb.cols / 2, rgb.rows / 2);
-//    int maxRadius = std::min(rgb.cols, rgb.rows) / 2;
-//    for (int y = 0; y < rgb.rows; y++) {
-//        for (int x = 0; x < rgb.cols; x++) {
-//            // 计算到中心点的距离
-//            float distance = cv::norm(cv::Point(x, y) - center);
-//            float blurAmount = (distance / maxRadius) * 15;  // 逐渐增加模糊强度
-//            cv::GaussianBlur(rgb, rgb, cv::Size(blurAmount, blurAmount), 0);
-//        }
-//    }
-
-    // 运动模糊
-//    int kernel_size = 15;  // 定义运动模糊的强度
-//    cv::Mat kernel = cv::Mat::zeros(kernel_size, kernel_size, CV_32F);
-//    kernel.at<float>(kernel_size / 2, kernel_size / 2) = 1.0;
-//    cv::GaussianBlur(kernel, kernel, cv::Size(kernel_size, kernel_size), 0);
-//    cv::filter2D(rgb, rgb, -1, kernel);
-
-    // Step 2: 识别高亮区域，使用阈值来确定哪些像素是亮点
-//    cv::Mat grayMat, brightSpots;
-//    cv::cvtColor(rgb, grayMat, cv::COLOR_BGR2GRAY);  // 转为灰度图
-//    cv::threshold(grayMat, brightSpots, 200, 255, cv::THRESH_BINARY);  // 检测亮点
-//
-//    // Step 3: 在亮点位置生成光斑
-//    // 创建光斑的形状，可以使用一个自定义的核，比如模拟圆形或星形光斑
-//    cv::Mat bokehKernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(1, 1));
-//
-//    // 使用膨胀操作来加大光斑的区域
-//    cv::dilate(brightSpots, brightSpots, bokehKernel);
-//
-//    // 将膨胀后的亮点区域加到模糊背景中
-//    std::vector<cv::Mat> channels;
-//    cv::split(rgb, channels);  // 分离颜色通道
-//    channels[0] += brightSpots;  // 在蓝色通道上添加光斑（可根据效果修改）
-//    channels[1] += brightSpots;  // 添加到绿色通道
-//    channels[2] += brightSpots;  // 添加到红色通道
-//    cv::merge(channels, rgb);  // 合并通道
-
-//    for (size_t i = 0; i < objects.size(); i++) {
-//        const Object &obj = objects[i];
-//        const unsigned char *color = colors[color_index % 80];
-//        color_index++;
-//
-//        cv::Scalar cc(color[0], color[1], color[2]);
-//
-//        fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label, obj.prob,
-//                obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
-//        if (needMark) {
-//            for (int y = 0; y < rgb.rows; y++) {
-//                uchar *image_ptr = rgb.ptr(y);
-//                const float *mask_ptr = obj.mask.ptr<float>(y);
-//                for (int x = 0; x < rgb.cols; x++) {
-//                    if (mask_ptr[x] >= 0.5) {
-//                        image_ptr[0] = cv::saturate_cast<uchar>(
-//                                image_ptr[0] * 0.5 + color[2] * 0.5);
-//                        image_ptr[1] = cv::saturate_cast<uchar>(
-//                                image_ptr[1] * 0.5 + color[1] * 0.5);
-//                        image_ptr[2] = cv::saturate_cast<uchar>(
-//                                image_ptr[2] * 0.5 + color[0] * 0.5);
-//                    }
-//                    image_ptr += 3;
-//                }
-//            }
-//        }
-//
-//        cv::rectangle(rgb, obj.rect, cc, 2);
-//
-//        char text[256];
-//        sprintf(text, "%s %.1f%%", class_names[obj.label], obj.prob * 100);
-//
-//        int baseLine = 0;
-//        cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
-//
-//        int x = obj.rect.x;
-//        int y = obj.rect.y - label_size.height - baseLine;
-//        if (y < 0)
-//            y = 0;
-//        if (x + label_size.width > rgb.cols)
-//            x = rgb.cols - label_size.width;
-//
-//        cv::rectangle(rgb, cv::Rect(cv::Point(x, y),
-//                                    cv::Size(label_size.width, label_size.height + baseLine)),
-//                      cv::Scalar(255, 255, 255), -1);
-//
-//        cv::putText(rgb, text, cv::Point(x, y + label_size.height),
-//                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
-//    }
+    addBokehEffect(effect, 100, 2.0f, 15.0f);  // 100个光斑，最小半径为10，最大为50
+    resetPerson(origin, effect, mask);
 
     return 0;
 }
