@@ -478,35 +478,6 @@ int YoloSeg::detect(const cv::Mat &rgb, std::vector<Object> &objects, bool needM
     return 0;
 }
 
-void addVignetteEffect(cv::Mat &input) {
-    int rows = input.rows;
-    int cols = input.cols;
-
-    // 创建一个遮罩图层，中心区域明亮，边缘逐渐变暗
-    cv::Mat vignette = cv::Mat::zeros(input.size(), CV_32F);
-    float sigmaX = cols * 0.5;
-    float sigmaY = rows * 0.5;
-
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            float x = (j - cols / 2.0) / sigmaX;
-            float y = (i - rows / 2.0) / sigmaY;
-            vignette.at<float>(i, j) = exp(-(x * x + y * y) / 2.0);
-        }
-    }
-
-    cv::Mat vignetteImage;
-    std::vector<cv::Mat> channels;
-    input.convertTo(vignetteImage, CV_32F);
-    cv::split(vignetteImage, channels);
-    channels[0] = channels[0].mul(vignette);
-    channels[1] = channels[1].mul(vignette);
-    channels[2] = channels[2].mul(vignette);
-    cv::merge(channels, vignetteImage);
-
-    vignetteImage.convertTo(input, CV_8UC3);
-}
-
 cv::Rect getCropRect(cv::Mat bitmap, float scale) {
     int width = bitmap.cols;
     int height = bitmap.rows;
@@ -539,7 +510,7 @@ void addBokehEffect(cv::Mat &image, int numCircles, float minRadius, float maxRa
     }
 
     // 高斯模糊光斑图像，增加柔和效果
-    cv::GaussianBlur(image, image, cv::Size(25, 24), 0);
+    cv::GaussianBlur(image, image, cv::Size(15, 15), 0);
 }
 
 // 还原人像位置的像素
@@ -569,24 +540,25 @@ cv::Mat getPersonMask(const std::vector<Object> &objects) {
 }
 
 int YoloSeg::draw(cv::Mat &rgb, const std::vector<Object> &objects, bool needMark) {
-    if (objects.size() == 0) {
+    if (objects.size() == 0 || !needMark) {
         return 0;
     }
-    cv::Rect cropArea = getCropRect(rgb, 0.67);
+
+
+    cv::Mat personMask = getPersonMask(objects);
+
+    cv::Rect cropArea = getCropRect(rgb, 1);
 
     // 提取 ROI
     cv::Mat effect = rgb(cropArea);
-    cv::Mat mask = getPersonMask(objects)(cropArea);
+    cv::Mat mask = personMask(cropArea);
     cv::Mat origin = effect.clone();
 
 
 //    cv::Size kSize(10, 10);
 //    cv::GaussianBlur(crop, crop, kSize, 0);
 
-    // 为图像添加暗角效果，可以给图像一种复古或焦点集中的效果。
-//    addVignetteEffect(rgb);
-
-    addBokehEffect(effect, 100, 2.0f, 15.0f);  // 100个光斑，最小半径为10，最大为50
+    addBokehEffect(effect, 50, 2.0f, 15.0f);  // 100个光斑，最小半径为10，最大为50
     resetPerson(origin, effect, mask);
 
     return 0;
