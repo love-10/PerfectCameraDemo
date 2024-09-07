@@ -508,9 +508,6 @@ void addBokehEffect(cv::Mat &image, int numCircles, float minRadius, float maxRa
         // 绘制圆形光斑
         cv::circle(image, cv::Point(x, y), static_cast<int>(radius), color, -1, cv::INTER_LINEAR);
     }
-
-    // 高斯模糊光斑图像，增加柔和效果
-    cv::GaussianBlur(image, image, cv::Size(15, 15), 0);
 }
 
 // 还原人像位置的像素
@@ -527,6 +524,17 @@ void resetPerson(cv::Mat origin, cv::Mat &effect, cv::Mat mask) {
     }
 }
 
+bool hasPerson(const std::vector<Object> &objects) {
+    cv::Mat ret;
+    for (int i = 0; i < objects.size(); i++) {
+        const Object &obj = objects[i];
+        if (obj.label == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 cv::Mat getPersonMask(const std::vector<Object> &objects) {
     cv::Mat ret;
     for (int i = 0; i < objects.size(); i++) {
@@ -540,11 +548,9 @@ cv::Mat getPersonMask(const std::vector<Object> &objects) {
 }
 
 int YoloSeg::draw(cv::Mat &rgb, const std::vector<Object> &objects, bool needMark) {
-    if (objects.size() == 0 || !needMark) {
+    if (objects.size() == 0 || !hasPerson(objects) || !needMark) {
         return 0;
     }
-
-
     cv::Mat personMask = getPersonMask(objects);
 
     cv::Rect cropArea = getCropRect(rgb, 1);
@@ -555,10 +561,9 @@ int YoloSeg::draw(cv::Mat &rgb, const std::vector<Object> &objects, bool needMar
     cv::Mat origin = effect.clone();
 
 
-//    cv::Size kSize(10, 10);
-//    cv::GaussianBlur(crop, crop, kSize, 0);
-
     addBokehEffect(effect, 50, 2.0f, 15.0f);  // 100个光斑，最小半径为10，最大为50
+    cv::GaussianBlur(effect, effect, cv::Size(15, 15), 0);
+
     resetPerson(origin, effect, mask);
 
     return 0;
